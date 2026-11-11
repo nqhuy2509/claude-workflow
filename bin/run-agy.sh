@@ -10,6 +10,7 @@
 #   <gốc project>/.agy/config.json          preset + lệnh bổ sung của kho (tuỳ chọn)
 # Ghi: agy-N.json, agy-N.err, settings.json (quyền đã ghép), allowed-commands.txt, conversation.txt.
 # LƯU Ý: ở chế độ không tương tác, một lệnh bị chặn làm agy KẾT THÚC LƯỢT ngay (bỏ dở các bước sau).
+# Hết quota → tự chuyển model kế tiếp trong "model_fallback" và tiếp tục phiên (ghi fallback.log).
 # Quyền: --mode accept-edits + chỉ các lệnh ghép từ presets/common.json, preset của kho và "allow" trong config.
 set -uo pipefail
 
@@ -57,23 +58,64 @@ with open(os.path.join(os.path.dirname(out), "allowed-commands.txt"), "w") as f:
 print(f"preset={names or ['(chỉ common)']} lệnh_được_phép={len(allow)}")
 EOF
 
-N=$(( $(ls -1 "$DIR"/agy-*.json 2>/dev/null | wc -l) + 1 ))
-OUT="$DIR/agy-$N.json"; ERR="$DIR/agy-$N.err"
-ARGS=(--mode accept-edits --add-dir "$WORKTREE" --output-format json
-      --settings "$DIR/settings.json" --print-timeout "$TIMEOUT")
-[[ -n "$CONV" ]] && ARGS+=(--conversation "$CONV")
-# Model: AGY_MODEL > "model" của kho > "model" chung trong config > mặc định của agy (xem bin/agy-model.sh).
-MODEL="${AGY_MODEL:-$(python3 -c 'import json,os,sys
-p,r=sys.argv[1:]
-c=json.load(open(p)) if os.path.exists(p) else {}
-print(((c.get("repos") or {}).get(r) or {}).get("model") or c.get("model") or "")' "$PROJECT/.agy/config.json" "$REPO")}"
-if [[ -n "$MODEL" ]]; then ARGS+=(--model "$MODEL"); echo "$MODEL" > "$DIR/model.txt"; echo "model=$MODEL"; fi
+# Chuỗi model: [model chính] + "model_fallback" (của kho, không có thì chung). Model chính:
+# AGY_MODEL > "model" của kho > "model" chung > model đầu của fallback > mặc định của agy.
+CHAIN=(); while IFS= read -r m; do CHAIN+=("$m"); done < <(python3 - "$PROJECT/.agy/config.json" "$REPO" "${AGY_MODEL:-}" <<'EOF'
+import json, os, sys
+p, r, env = sys.argv[1:]
+c = json.load(open(p)) if os.path.exists(p) else {}
+rc = (c.get("repos") or {}).get(r) or {}
+fb = rc.get("model_fallback") or c.get("model_fallback") or []
+first = env or rc.get("model") or c.get("model") or ""
+chain = list(dict.fromkeys([m for m in [first, *fb] if m]))
+print("\n".join(chain) if chain else "")
+EOF
+)
+[[ ${#CHAIN[@]} -eq 0 || -z "${CHAIN[0]}" ]] && CHAIN=("")   # "" = để agy tự chọn
+
+# Dấu hiệu hết quota / giới hạn tốc độ trong kết quả agy (chỉnh khi gặp mẫu lỗi thật).
+QUOTA_RE='quota|rate[ _-]?limit|resource[ _]?exhausted|exhausted|too many requests|\b429\b|usage limit|credits?'
+is_quota() {  # is_quota <json> <err>: in lại "yes" nếu lượt chạy dừng vì hết quota
+  python3 - "$1" "$2" "$QUOTA_RE" <<'EOF'
+import json, re, sys
+out, err, rx = sys.argv[1:]
+txt = open(err, errors="ignore").read()
+ok = False
+try:
+    d = json.load(open(out))
+    ok = d.get("status") == "SUCCESS" and not d.get("error")
+    txt += " " + json.dumps({k: v for k, v in d.items() if k in ("status", "error", "result", "message")})
+except Exception:
+    txt += " " + open(out, errors="ignore").read()
+print("yes" if not ok and re.search(rx, txt, re.I) else "no")
+EOF
+}
+
+QUOTA_NOTE="NOTE: The previous run of this task stopped because the model ran out of quota. Continue from the current state of the worktree (files already changed are kept): check git status / git diff and AGY_REPORT.md, finish the remaining steps, run the self-checks and update AGY_REPORT.md. Same rules and allowed commands as before."
 
 cd "$WORKTREE"
-agy "${ARGS[@]}" --print="$(cat "$PROMPT_FILE")" > "$OUT" 2> "$ERR"
-CODE=$?
-
-python3 - "$OUT" "$DIR/conversation.txt" <<'EOF' || true
+PROMPT="$(cat "$PROMPT_FILE")"; CODE=0
+for i in "${!CHAIN[@]}"; do
+  MODEL="${CHAIN[$i]}"
+  N=$(( $(ls -1 "$DIR"/agy-*.json 2>/dev/null | wc -l) + 1 ))
+  OUT="$DIR/agy-$N.json"; ERR="$DIR/agy-$N.err"
+  ARGS=(--mode accept-edits --add-dir "$WORKTREE" --output-format json
+        --settings "$DIR/settings.json" --print-timeout "$TIMEOUT")
+  [[ -n "$CONV" ]] && ARGS+=(--conversation "$CONV")
+  if [[ -n "$MODEL" ]]; then ARGS+=(--model "$MODEL"); echo "$MODEL" > "$DIR/model.txt"; fi
+  echo "model=${MODEL:-mặc định} lượt=agy-$N"
+  agy "${ARGS[@]}" --print="$PROMPT" > "$OUT" 2> "$ERR"
+  CODE=$?
+  # Không tiếp tục được phiên cũ bằng model khác → mở phiên mới (worktree vẫn giữ thay đổi).
+  if [[ -n "$CONV" && $i -gt 0 && "$(is_quota "$OUT" "$ERR")" == no ]] \
+     && ! python3 -c 'import json,sys;json.load(open(sys.argv[1]))["conversation_id"]' "$OUT" 2>/dev/null; then
+    echo "$(date '+%F %T') không tiếp tục được phiên $CONV bằng $MODEL → mở phiên mới" >> "$DIR/fallback.log"
+    CONV=""; PROMPT="$(cat "$DIR/brief.md")"$'\n\n'"$QUOTA_NOTE"
+    ARGS=(--mode accept-edits --add-dir "$WORKTREE" --output-format json
+          --settings "$DIR/settings.json" --print-timeout "$TIMEOUT" --model "$MODEL")
+    agy "${ARGS[@]}" --print="$PROMPT" > "$OUT" 2> "$ERR"; CODE=$?
+  fi
+  python3 - "$OUT" "$DIR/conversation.txt" <<'EOF' || true
 import json, sys
 try:
     d = json.load(open(sys.argv[1]))
@@ -84,5 +126,16 @@ try:
 except Exception as e:
     print(f"Không đọc được kết quả JSON của agy: {e}")
 EOF
+  [[ "$(is_quota "$OUT" "$ERR")" == yes ]] || break
+  NEXT="${CHAIN[$((i+1))]:-}"
+  if [[ -z "$NEXT" ]]; then
+    echo "$(date '+%F %T') ${MODEL:-mặc định} hết quota, không còn model dự phòng" >> "$DIR/fallback.log"
+    echo "HẾT QUOTA: đã thử hết chuỗi model (${CHAIN[*]})." >&2; CODE=4; break
+  fi
+  echo "$(date '+%F %T') ${MODEL:-mặc định} hết quota → chuyển $NEXT" | tee -a "$DIR/fallback.log"
+  [[ -f "$DIR/conversation.txt" ]] && CONV="$(cat "$DIR/conversation.txt")"
+  PROMPT="$QUOTA_NOTE"
+  [[ -z "$CONV" ]] && PROMPT="$(cat "$DIR/brief.md")"$'\n\n'"$QUOTA_NOTE"
+done
 echo "exit=$CODE output=$OUT"
 exit $CODE

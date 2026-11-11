@@ -4,6 +4,7 @@
 #   agy-model.sh show   [gốc-project]         model đang cấu hình (mặc định chung + từng kho)
 #   agy-model.sh set <model> [kho] [gốc]      đặt model mặc định (hoặc riêng cho một kho)
 #   agy-model.sh unset [kho] [gốc]            bỏ đặt (dùng mặc định của agy)
+#   agy-model.sh fallback <m1,m2,…|none> [kho] [gốc]  chuỗi model dự phòng khi hết quota
 # Thứ tự ưu tiên khi chạy: biến AGY_MODEL > "model" của kho > "model" chung trong .agy/config.json > mặc định của agy.
 set -uo pipefail
 CMD="${1:-show}"; shift || true
@@ -15,11 +16,15 @@ case "$CMD" in
     [[ -f "$ROOT/.agy/config.json" ]] && CUR="$(python3 -c 'import json,sys;print(json.load(open(sys.argv[1])).get("model",""))' "$ROOT/.agy/config.json")"
     models | while IFS=$'\t' read -r id name; do
       [[ "$id" == "$CUR" ]] && m="*" || m=" "; printf "%s %-28s %s\n" "$m" "$id" "$name"; done ;;
-  show|set|unset)
+  show|set|unset|fallback)
     if [[ "$CMD" == set ]]; then
       MODEL="${1:?thiếu tên model}"; REPO="${2:-}"; ROOT="${3:-$PWD}"
       models | cut -f1 | grep -qx "$MODEL" || { echo "Model không có trong 'agy models': $MODEL" >&2; exit 2; }
     elif [[ "$CMD" == unset ]]; then MODEL=""; REPO="${1:-}"; ROOT="${2:-$PWD}"
+    elif [[ "$CMD" == fallback ]]; then
+      MODEL="${1:?thiếu danh sách model, vd m1,m2 hoặc none}"; REPO="${2:-}"; ROOT="${3:-$PWD}"
+      if [[ "$MODEL" != none ]]; then AV="$(models | cut -f1)"
+        for m in ${MODEL//,/ }; do grep -qx "$m" <<<"$AV" || { echo "Model không có trong 'agy models': $m" >&2; exit 2; }; done; fi
     else MODEL=""; REPO=""; ROOT="${1:-$PWD}"; fi
     CFG="$ROOT/.agy/config.json"
     [[ -f "$CFG" ]] || { echo "Chưa có $CFG" >&2; exit 2; }
@@ -31,12 +36,17 @@ if cmd != "show":
     target = cfg if not repo else cfg.get("repos", {}).get(repo)
     if target is None: sys.exit(f"Không có kho '{repo}' trong config")
     if cmd == "set": target["model"] = model
-    else: target.pop("model", None)
+    elif cmd == "unset": target.pop("model", None)
+    elif model == "none": target.pop("model_fallback", None)
+    else: target["model_fallback"] = [m for m in model.split(",") if m]
     json.dump(cfg, open(cfg_path, "w", encoding="utf-8"), ensure_ascii=False, indent=2); open(cfg_path, "a").write("\n")
 d = cfg.get("model") or "(mặc định của agy)"
-print(f"chung: {d}")
+fb = cfg.get("model_fallback") or []
+print(f"chung: {d}" + (f"   dự phòng: {' → '.join(fb)}" if fb else ""))
 for name, rc in (cfg.get("repos") or {}).items():
-    print(f"  {name}: {rc.get('model') or '→ ' + d}")
+    rfb = rc.get("model_fallback")
+    print(f"  {name}: {rc.get('model') or '→ ' + d}" + (f"   dự phòng: {' → '.join(rfb)}" if rfb else ""))
+print("(chạy: model đã đặt, hết quota thì lần lượt theo chuỗi dự phòng; chưa đặt model thì bắt đầu từ model đầu chuỗi)")
 PY
     ;;
   *) sed -n '2,7p' "$0"; exit 1 ;;

@@ -57,6 +57,7 @@ Với **mỗi kho** trong bảng phân việc:
   `bash ~/.claude/agy/bin/run-agy.sh <gốc>/.agy/tasks/<việc> <kho>`
 - agy chạy `--mode accept-edits`, chỉ được dùng lệnh ghép từ `presets/common.json` + preset của kho + `allow` trong config.
   Model theo `"model"` trong config (đổi bằng `/agy-model`); nêu model đang dùng trong dòng báo người dùng.
+  Hết quota → script tự chuyển model theo `"model_fallback"` và tiếp tục phiên; thoát mã 4 = đã thử hết chuỗi → báo người dùng.
   Giới hạn mặc định 30 phút (`AGY_TIMEOUT=…s` để đổi).
 - Báo người dùng một dòng: đã giao cho agy, đang chờ. **Không poll** — chờ thông báo tiến trình kết thúc.
 
@@ -70,7 +71,8 @@ Không coi báo cáo của agy là đủ. Với mỗi kho, trong worktree:
 3. Chạy lệnh `test` của kho (config hoặc preset). Lệnh quá lâu thì lọc theo phần liên quan và ghi rõ đã lọc.
 4. Đọc diff, đối chiếu từng tiêu chí. Việc giao diện: chạy app / simulator và chụp màn hình khi khả thi; việc API: gọi thử.
 5. Nhiều session: kiểm tra các bên khớp *Hợp đồng dùng chung*.
-6. Chuyển `AGY_REPORT.md` từ worktree vào `.agy/tasks/<việc>/<kho>/` (không để lọt vào commit).
+6. Có `fallback.log` → nêu trong báo cáo: model nào hết quota, chuyển sang model nào, ở lượt nào.
+7. Chuyển `AGY_REPORT.md` từ worktree vào `.agy/tasks/<việc>/<kho>/` (không để lọt vào commit).
 
 ## Bước 6 — Báo cáo (tiếng Việt) rồi DỪNG
 - Viết `.agy/tasks/<việc>/report.md` theo `~/.claude/agy/templates/report.md`: từng tiêu chí **Đạt / Không đạt / Chưa kiểm được** kèm

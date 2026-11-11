@@ -57,6 +57,10 @@ Chạy tay: `~/.claude/agy/bin/agy-status.sh [gốc-project]`.
 - `/agy-model` — xem model đang dùng và danh sách model (`agy models`).
 - `/agy-model set claude-opus-5-5-high` — đặt model mặc định cho project; `/agy-model set gemini-3.8-flash-high libra-app` — riêng một kho.
 - `/agy-model unset [kho]` — về mặc định. Ghi vào `"model"` trong `.agy/config.json`.
+- **Tự chuyển model khi hết quota**: `/agy-model fallback claude-opus-5-5-high,gemini-4-argon-high,claude-sonnet-5-5-high,gemini-3.8-flash-high`
+  → ghi `"model_fallback"` vào config. agy hết quota (nhận diện qua `quota`, `rate limit`, `RESOURCE_EXHAUSTED`, `429`… trong kết quả)
+  → `run-agy.sh` chuyển model kế tiếp, **tiếp tục đúng phiên** (không được thì mở phiên mới trên worktree cũ), ghi `fallback.log`.
+  Thử hết chuỗi vẫn hết quota → thoát mã 4.
 - Ghi đè một lần: `AGY_MODEL=<mã> run-agy.sh …`. Ưu tiên: `AGY_MODEL` > model của kho > model chung > mặc định của agy.
 
 ## Quyền của agy
