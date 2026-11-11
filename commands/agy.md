@@ -56,6 +56,7 @@ Với **mỗi kho** trong bảng phân việc:
 - Mỗi kho **một lệnh nền riêng** (`run_in_background: true`); nhiều kho thì chạy **song song**:
   `bash ~/.claude/agy/bin/run-agy.sh <gốc>/.agy/tasks/<việc> <kho>`
 - agy chạy `--mode accept-edits`, chỉ được dùng lệnh ghép từ `presets/common.json` + preset của kho + `allow` trong config.
+  Model theo `"model"` trong config (đổi bằng `/agy-model`); nêu model đang dùng trong dòng báo người dùng.
   Giới hạn mặc định 30 phút (`AGY_TIMEOUT=…s` để đổi).
 - Báo người dùng một dòng: đã giao cho agy, đang chờ. **Không poll** — chờ thông báo tiến trình kết thúc.
 

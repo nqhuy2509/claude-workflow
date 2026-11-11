@@ -62,6 +62,12 @@ OUT="$DIR/agy-$N.json"; ERR="$DIR/agy-$N.err"
 ARGS=(--mode accept-edits --add-dir "$WORKTREE" --output-format json
       --settings "$DIR/settings.json" --print-timeout "$TIMEOUT")
 [[ -n "$CONV" ]] && ARGS+=(--conversation "$CONV")
+# Model: AGY_MODEL > "model" của kho > "model" chung trong config > mặc định của agy (xem bin/agy-model.sh).
+MODEL="${AGY_MODEL:-$(python3 -c 'import json,os,sys
+p,r=sys.argv[1:]
+c=json.load(open(p)) if os.path.exists(p) else {}
+print(((c.get("repos") or {}).get(r) or {}).get("model") or c.get("model") or "")' "$PROJECT/.agy/config.json" "$REPO")}"
+if [[ -n "$MODEL" ]]; then ARGS+=(--model "$MODEL"); echo "$MODEL" > "$DIR/model.txt"; echo "model=$MODEL"; fi
 
 cd "$WORKTREE"
 agy "${ARGS[@]}" --print="$(cat "$PROMPT_FILE")" > "$OUT" 2> "$ERR"

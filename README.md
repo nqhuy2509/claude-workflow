@@ -43,9 +43,16 @@ Lần đầu, nếu project chưa có `.agy/config.json`, Claude tự nhận di�
 | Đường dẫn | Vai trò |
 |---|---|
 | `commands/agy.md` | Lệnh `/agy`: các bước, chỗ dừng chờ duyệt, quy tắc |
+| `commands/agy-model.md`, `bin/agy-model.sh` | Xem / đổi model agy |
 | `bin/run-agy.sh` | Chạy agy cho một kho; ghép quyền từ preset; tiếp tục phiên (`--conversation`) |
 | `templates/` | `proposal.md` (VI), `brief.md` (EN, kèm mẫu `AGY_REPORT.md`), `report.md` (VI) |
 | `presets/` | Lệnh agy được phép theo loại project: `common`, `flutter`, `dotnet`, `node`, `python` |
+
+## Chọn model cho agy
+- `/agy-model` — xem model đang dùng và danh sách model (`agy models`).
+- `/agy-model set claude-opus-5-5-high` — đặt model mặc định cho project; `/agy-model set gemini-3.8-flash-high libra-app` — riêng một kho.
+- `/agy-model unset [kho]` — về mặc định. Ghi vào `"model"` trong `.agy/config.json`.
+- Ghi đè một lần: `AGY_MODEL=<mã> run-agy.sh …`. Ưu tiên: `AGY_MODEL` > model của kho > model chung > mặc định của agy.
 
 ## Quyền của agy
 agy chạy `--mode accept-edits`: tự sửa file trong worktree, **mọi lệnh terminal bị chặn trừ danh sách cho phép**
