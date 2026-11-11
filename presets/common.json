@@ -1,0 +1,4 @@
+{
+  "description": "Luôn bật: lệnh git chỉ-đọc để agy tự xem thay đổi của mình.",
+  "allow": ["command(git status)", "command(git diff)", "command(git log)", "command(git show)"]
+}

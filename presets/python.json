@@ -1,0 +1,6 @@
+{
+  "description": "Python",
+  "detect": ["pyproject.toml", "requirements.txt", "setup.py"],
+  "allow": ["command(pytest)", "command(python -m pytest)", "command(python3 -m pytest)", "command(ruff check)", "command(ruff format)", "command(mypy)"],
+  "test": ["python3 -m pytest"]
+}

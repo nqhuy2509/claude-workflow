@@ -1,0 +1,7 @@
+{
+  "description": ".NET / ABP",
+  "detect": ["*.sln", "*.slnx", "*.csproj"],
+  "allow": ["command(dotnet restore)", "command(dotnet build)", "command(dotnet test)", "command(dotnet format)",
+            "command(dotnet ef migrations add)"],
+  "test": ["dotnet build", "dotnet test"]
+}

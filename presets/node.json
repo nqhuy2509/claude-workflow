@@ -1,0 +1,8 @@
+{
+  "description": "Node / Angular / React (npm, pnpm, yarn)",
+  "detect": ["package.json"],
+  "allow": ["command(npm install)", "command(npm ci)", "command(npm run build)", "command(npm run lint)", "command(npm test)", "command(npm run test)",
+            "command(pnpm install)", "command(pnpm build)", "command(pnpm lint)", "command(pnpm test)",
+            "command(yarn install)", "command(yarn build)", "command(yarn lint)", "command(yarn test)", "command(npx tsc)"],
+  "test": ["npm run build", "npm test"]
+}

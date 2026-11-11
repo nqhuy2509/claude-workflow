@@ -1,0 +1,7 @@
+{
+  "description": "Flutter / Dart",
+  "detect": ["pubspec.yaml"],
+  "allow": ["command(flutter pub get)", "command(flutter gen-l10n)", "command(flutter analyze)", "command(flutter test)",
+            "command(dart format)", "command(dart analyze)", "command(dart test)", "command(dart run build_runner build)"],
+  "test": ["flutter pub get", "flutter analyze", "flutter test"]
+}
