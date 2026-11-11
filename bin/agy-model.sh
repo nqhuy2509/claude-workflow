@@ -7,6 +7,7 @@
 #   agy-model.sh fallback <m1,m2,…|none> [kho] [gốc]  chuỗi model dự phòng khi hết quota
 #   agy-model.sh executor <agy|codex|none> [kho] [gốc] executor mặc định (none = bỏ đặt)
 #   agy-model.sh codex <model|none> [kho] [gốc]         model cho codex
+#   agy-model.sh size <S|M|L> <model|none> [gốc]        model agy theo độ lớn việc
 #   agy-model.sh exec-fallback <codex|none> [gốc]       agy hết quota cả chuỗi → chuyển codex
 # Thứ tự ưu tiên khi chạy: biến AGY_MODEL > "model" của kho > "model" chung trong .agy/config.json > mặc định của agy.
 set -uo pipefail
@@ -19,7 +20,7 @@ case "$CMD" in
     [[ -f "$ROOT/.agy/config.json" ]] && CUR="$(python3 -c 'import json,sys;print(json.load(open(sys.argv[1])).get("model",""))' "$ROOT/.agy/config.json")"
     models | while IFS=$'\t' read -r id name; do
       [[ "$id" == "$CUR" ]] && m="*" || m=" "; printf "%s %-28s %s\n" "$m" "$id" "$name"; done ;;
-  show|set|unset|fallback|executor|codex|exec-fallback)
+  show|set|unset|fallback|executor|codex|exec-fallback|size)
     if [[ "$CMD" == set ]]; then
       MODEL="${1:?thiếu tên model}"; REPO="${2:-}"; ROOT="${3:-$PWD}"
       models | cut -f1 | grep -qx "$MODEL" || { echo "Model không có trong 'agy models': $MODEL" >&2; exit 2; }
@@ -27,6 +28,11 @@ case "$CMD" in
     elif [[ "$CMD" == executor || "$CMD" == codex ]]; then
       MODEL="${1:?thiếu giá trị}"; REPO="${2:-}"; ROOT="${3:-$PWD}"
       [[ "$CMD" == executor && ! "$MODEL" =~ ^(agy|codex|none)$ ]] && { echo "executor phải là agy | codex | none" >&2; exit 2; }
+    elif [[ "$CMD" == size ]]; then
+      SZ="$(tr a-z A-Z <<<"${1:?thiếu S|M|L}")"; MODEL="${2:?thiếu model}"; REPO=""; ROOT="${3:-$PWD}"
+      [[ "$SZ" =~ ^(S|M|L)$ ]] || { echo "độ lớn phải là S | M | L" >&2; exit 2; }
+      [[ "$MODEL" == none ]] || models | cut -f1 | grep -qx "$MODEL" || { echo "Model không có trong 'agy models': $MODEL" >&2; exit 2; }
+      MODEL="$SZ=$MODEL"
     elif [[ "$CMD" == exec-fallback ]]; then
       MODEL="${1:?thiếu giá trị (codex|none)}"; REPO=""; ROOT="${2:-$PWD}"
     elif [[ "$CMD" == fallback ]]; then
@@ -45,6 +51,11 @@ if cmd != "show":
     if target is None: sys.exit(f"Không có kho '{repo}' trong config")
     if cmd == "set": target["model"] = model
     elif cmd == "unset": target.pop("model", None)
+    elif cmd == "size":
+        sz, m = model.split("=", 1); bs = target.setdefault("model_by_size", {})
+        if m == "none": bs.pop(sz, None)
+        else: bs[sz] = m
+        if not bs: target.pop("model_by_size")
     elif cmd in ("executor", "codex", "exec-fallback"):
         key = {"executor": "executor", "codex": "codex_model", "exec-fallback": "executor_fallback"}[cmd]
         if model == "none": target.pop(key, None)
@@ -56,13 +67,15 @@ d = cfg.get("model") or "(mặc định của agy)"
 ex = cfg.get("executor") or "agy"
 print(f"executor: {ex}" + (f"   (agy hết quota → {cfg['executor_fallback']})" if cfg.get("executor_fallback") else "")
       + f"   model codex: {cfg.get('codex_model') or 'mặc định của codex'}")
+bs = cfg.get("model_by_size") or {}
+if bs: print("theo độ lớn: " + "  ".join(f"{k}={bs[k]}" for k in ("S", "M", "L") if k in bs))
 fb = cfg.get("model_fallback") or []
 print(f"chung: {d}" + (f"   dự phòng: {' → '.join(fb)}" if fb else ""))
 for name, rc in (cfg.get("repos") or {}).items():
     rfb = rc.get("model_fallback")
     extra = "".join(f"   {k}: {rc[k]}" for k in ("executor", "codex_model") if rc.get(k))
     print(f"  {name}: {rc.get('model') or '→ ' + d}" + (f"   dự phòng: {' → '.join(rfb)}" if rfb else "") + extra)
-print("(chạy: model đã đặt, hết quota thì lần lượt theo chuỗi dự phòng; chưa đặt model thì bắt đầu từ model đầu chuỗi)")
+print("(ưu tiên: AGY_MODEL > model của kho > theo độ lớn việc > model chung > đầu chuỗi dự phòng; hết quota → lần lượt theo chuỗi)")
 PY
     ;;
   *) sed -n '2,7p' "$0"; exit 1 ;;

@@ -24,7 +24,7 @@ link "$KIT/commands/agy.md" "$CLAUDE_DIR/commands/agy.md"
 link "$KIT/commands/agy-model.md" "$CLAUDE_DIR/commands/agy-model.md"
 link "$KIT/commands/agy-status.md" "$CLAUDE_DIR/commands/agy-status.md"
 link "$KIT" "$CLAUDE_DIR/agy"
-chmod +x "$KIT/bin/run-agy.sh" "$KIT/bin/agy-model.sh" "$KIT/bin/agy-status.sh" "$KIT/bin/run-codex.sh" "$KIT/bin/run-task.sh"
+chmod +x "$KIT/bin/run-agy.sh" "$KIT/bin/agy-model.sh" "$KIT/bin/agy-status.sh" "$KIT/bin/run-codex.sh" "$KIT/bin/run-task.sh" "$KIT/bin/verify.sh"
 
 echo
 command -v agy >/dev/null && echo "agy: $(agy --version 2>/dev/null | head -1)" \

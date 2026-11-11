@@ -24,13 +24,34 @@ fi
 
 PREAMBLE="EXECUTOR NOTE (Codex): You run inside a sandbox that can write only inside this worktree; network access may be unavailable (dependencies are expected to be restored already). Unlike the 'Commands' allowlist in the brief, you MAY run any build / test / lint / format command inside the worktree, and you should run the self-check commands yourself. All other rules still apply: do NOT commit, push, switch branches, or touch files outside the allowed paths. Write AGY_REPORT.md exactly as the brief describes."
 PROMPT="$(cat "$PROMPT_FILE")"
-[[ -z "$SESSION" ]] && PROMPT="$PREAMBLE"$'\n\n'"$PROMPT"
+
+# Bài học tích luỹ của project (.agy/lessons.md) → chèn vào prompt vòng đầu.
+LESSONS_FILE="$PROJECT/.agy/lessons.md"
+lessons_block() {  # lessons_block <kho>: dòng "- …"; dòng có "[kho: X]" chỉ áp cho kho X
+  [[ -s "$LESSONS_FILE" ]] || return 0
+  local body; body="$(python3 - "$LESSONS_FILE" "$1" <<'PY'
+import re, sys
+f, repo = sys.argv[1:]
+for l in open(f, encoding="utf-8"):
+    if not l.lstrip().startswith("-"): continue
+    m = re.search(r"\[(?:kho|repo):\s*([^\]]+)\]", l)
+    if m and repo not in [x.strip() for x in m.group(1).split(",")]: continue
+    print(l.rstrip())
+PY
+)"
+  [[ -n "$body" ]] && printf '\n\n## Lessons from previous tasks in this project (follow them)\n%s\n' "$body"
+  return 0
+}
+[[ -z "$SESSION" ]] && PROMPT="$PREAMBLE"$'\n\n'"$PROMPT$(lessons_block "$REPO")"
 [[ -n "$EXTRA" ]] && PROMPT="$PROMPT"$'\n\n'"$EXTRA"
 
+SIZE="$(cat "$DIR/size.txt" 2>/dev/null || cat "$TASK_DIR/size.txt" 2>/dev/null || true)"
 MODEL="${CODEX_MODEL:-$(python3 -c 'import json,os,sys
-p,r=sys.argv[1:]
+p,r,z=sys.argv[1:]
 c=json.load(open(p)) if os.path.exists(p) else {}
-print(((c.get("repos") or {}).get(r) or {}).get("codex_model") or c.get("codex_model") or "")' "$PROJECT/.agy/config.json" "$REPO")}"
+rc=(c.get("repos") or {}).get(r) or {}
+bs=(rc.get("codex_model_by_size") or c.get("codex_model_by_size") or {}).get(z.strip().upper(),"")
+print(rc.get("codex_model") or bs or c.get("codex_model") or "")' "$PROJECT/.agy/config.json" "$REPO" "$SIZE")}"
 
 N=$(( $(ls -1 "$DIR"/codex-*.jsonl 2>/dev/null | wc -l) + 1 ))
 OUT="$DIR/codex-$N.jsonl"; ERR="$DIR/codex-$N.err"

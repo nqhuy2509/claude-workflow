@@ -32,10 +32,15 @@ You are implementing ONE approved task in the git worktree below. Work only insi
 - Create `AGY_REPORT.md` early (Status: IN PROGRESS) and update it as you go, so a report exists even if you stop.
 
 ## Acceptance criteria
-- [ ]
+<!-- Each criterion names the test or command that proves it. -->
+- [ ] <criterion> — proven by `<test name / command>`
 
 ## Self-check commands (run them from the worktree)
+Run ONLY these focused checks — the full suite is run by the reviewer afterwards, do not run it yourself:
 ```sh
+<setup if needed, e.g. flutter gen-l10n>
+<static check scoped to changed code, e.g. flutter analyze lib/features/x test/x_test.dart>
+<only the tests for this change, e.g. flutter test test/x_test.dart>
 ```
 
 ## When finished

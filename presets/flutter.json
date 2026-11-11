@@ -1,7 +1,40 @@
 {
   "description": "Flutter / Dart",
-  "detect": ["pubspec.yaml"],
-  "allow": ["command(flutter pub get)", "command(flutter gen-l10n)", "command(flutter analyze)", "command(flutter test)",
-            "command(dart format)", "command(dart analyze)", "command(dart test)", "command(dart run build_runner build)"],
-  "test": ["flutter pub get", "flutter analyze", "flutter test"]
+  "detect": [
+    "pubspec.yaml"
+  ],
+  "allow": [
+    "command(flutter pub get)",
+    "command(flutter gen-l10n)",
+    "command(flutter analyze)",
+    "command(flutter test)",
+    "command(dart format)",
+    "command(dart analyze)",
+    "command(dart test)",
+    "command(dart run build_runner build)"
+  ],
+  "test": [
+    "flutter pub get",
+    "flutter analyze",
+    "flutter test"
+  ],
+  "suspect": [
+    {
+      "name": "Chuỗi tiếng Việt viết cứng (nên dùng l10n)",
+      "glob": "lib/**/*.dart",
+      "exclude": [
+        "lib/generated/**",
+        "lib/l10n/**"
+      ],
+      "regex": "['\"][^'\"\\n]*[À-ỹĐđ][^'\"\\n]*['\"]"
+    },
+    {
+      "name": "Màu viết cứng",
+      "glob": "lib/**/*.dart",
+      "exclude": [
+        "packages/**"
+      ],
+      "regex": "Color\\(0x[0-9A-Fa-f]{6,8}\\)"
+    }
+  ]
 }

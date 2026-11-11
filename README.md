@@ -45,6 +45,7 @@ Lần đầu, nếu project chưa có `.agy/config.json`, Claude tự nhận di�
 | `commands/agy.md` | Lệnh `/agy`: các bước, chỗ dừng chờ duyệt, quy tắc |
 | `commands/agy-status.md`, `bin/agy-status.sh` | Xem các việc và trạng thái |
 | `commands/agy-model.md`, `bin/agy-model.sh` | Xem / đổi model agy |
+| `bin/verify.sh` | Kiểm tra tự động một kho → `verify.md` |
 | `bin/run-task.sh` | Điều phối: chọn executor, resume đúng phiên, chuyển codex khi agy hết quota |
 | `bin/run-codex.sh` | Chạy codex cho một kho (sandbox workspace-write) |
 | `bin/run-agy.sh` | Chạy agy cho một kho; ghép quyền từ preset; tiếp tục phiên (`--conversation`) |
@@ -59,6 +60,14 @@ Mỗi kho trong một việc do **agy** (mặc định) hoặc **codex** làm; `
 - codex chạy `codex exec --sandbox workspace-write -c approval_policy="never"`: chỉ ghi trong worktree, **không mạng**, được tự chạy build/test
   (khác agy chỉ được chạy lệnh trong danh sách). Claude khôi phục gói trong worktree trước khi giao. Kết quả: `codex-N.jsonl`, `codex-N.last.md`, `session.txt`.
 - Gợi ý: UI / theo thiết kế → agy; backend, sửa lỗi, việc phải chạy test nhiều vòng → codex. Việc hai kho có thể mỗi kho một executor, chạy song song.
+
+## Tiết kiệm mà vẫn chắc chắn
+- **Kiểm tra tự động** `bin/verify.sh <việc> <kho>` → `verify.md`: file ngoài *Allowed paths*, symbol cấm sửa (dòng `Do NOT change \`A\`` trong brief),
+  dòng mới đáng ngờ theo preset (`"suspect"`: chuỗi viết cứng, màu hex, định dạng số…), chạy toàn bộ test (lỗi giống hệt base → 🟡 "có sẵn"),
+  tóm `AGY_REPORT.md`. Claude đọc bảng này rồi chỉ đọc diff ở chỗ cần.
+- **Model theo độ lớn việc**: đề xuất ghi S/M/L → `<việc>/size.txt` → `"model_by_size"` (`/agy-model size S gemini-3.8-flash-high`).
+- **Test có trọng tâm**: brief chỉ cho agy chạy test của phần thay đổi; bộ đầy đủ chạy một lần trong `verify.sh`.
+- **Bài học** `.agy/lessons.md` của project: mỗi dòng `- …` (tiếng Anh, `[kho: X]` để giới hạn) tự chèn vào prompt vòng đầu; Claude thêm dòng sau mỗi lần Làm lại / bị chặn lệnh.
 
 ## Xem việc đang chạy
 `/agy-status` — bảng mọi việc trong `.agy/tasks/`: kho, trạng thái (ĐANG CHẠY / CHỜ KIỂM TRA / CHỜ QUYẾT / ĐÃ XONG/BỎ / CHƯA GIAO), model, số vòng, lần chạy cuối.

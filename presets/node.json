@@ -1,8 +1,42 @@
 {
   "description": "Node / Angular / React (npm, pnpm, yarn)",
-  "detect": ["package.json"],
-  "allow": ["command(npm install)", "command(npm ci)", "command(npm run build)", "command(npm run lint)", "command(npm test)", "command(npm run test)",
-            "command(pnpm install)", "command(pnpm build)", "command(pnpm lint)", "command(pnpm test)",
-            "command(yarn install)", "command(yarn build)", "command(yarn lint)", "command(yarn test)", "command(npx tsc)"],
-  "test": ["npm run build", "npm test"]
+  "detect": [
+    "package.json"
+  ],
+  "allow": [
+    "command(npm install)",
+    "command(npm ci)",
+    "command(npm run build)",
+    "command(npm run lint)",
+    "command(npm test)",
+    "command(npm run test)",
+    "command(pnpm install)",
+    "command(pnpm build)",
+    "command(pnpm lint)",
+    "command(pnpm test)",
+    "command(yarn install)",
+    "command(yarn build)",
+    "command(yarn lint)",
+    "command(yarn test)",
+    "command(npx tsc)"
+  ],
+  "test": [
+    "npm run build",
+    "npm test"
+  ],
+  "suspect": [
+    {
+      "name": "Màu hex viết cứng (nên dùng CSS token)",
+      "glob": "**/*.scss",
+      "regex": "#[0-9a-fA-F]{3,8}\\b"
+    },
+    {
+      "name": "Định dạng số trực tiếp (nên dùng pipe/helper)",
+      "glob": "**/*.ts",
+      "exclude": [
+        "**/*.spec.ts"
+      ],
+      "regex": "toLocaleString|Intl\\.NumberFormat"
+    }
+  ]
 }

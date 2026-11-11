@@ -59,14 +59,17 @@ print(f"preset={names or ['(chỉ common)']} lệnh_được_phép={len(allow)}"
 EOF
 
 # Chuỗi model: [model chính] + "model_fallback" (của kho, không có thì chung). Model chính:
-# AGY_MODEL > "model" của kho > "model" chung > model đầu của fallback > mặc định của agy.
-CHAIN=(); while IFS= read -r m; do CHAIN+=("$m"); done < <(python3 - "$PROJECT/.agy/config.json" "$REPO" "${AGY_MODEL:-}" <<'EOF'
+# AGY_MODEL > "model" của kho > "model_by_size"[S|M|L] > "model" chung > model đầu của fallback > mặc định của agy.
+# Độ lớn việc (S/M/L) ở <việc>/<kho>/size.txt hoặc <việc>/size.txt → "model_by_size".
+SIZE="$(cat "$DIR/size.txt" 2>/dev/null || cat "$TASK_DIR/size.txt" 2>/dev/null || true)"
+CHAIN=(); while IFS= read -r m; do CHAIN+=("$m"); done < <(python3 - "$PROJECT/.agy/config.json" "$REPO" "${AGY_MODEL:-}" "$SIZE" <<'EOF'
 import json, os, sys
-p, r, env = sys.argv[1:]
+p, r, env, size = sys.argv[1:]
 c = json.load(open(p)) if os.path.exists(p) else {}
 rc = (c.get("repos") or {}).get(r) or {}
 fb = rc.get("model_fallback") or c.get("model_fallback") or []
-first = env or rc.get("model") or c.get("model") or ""
+by_size = (rc.get("model_by_size") or c.get("model_by_size") or {}).get(size.strip().upper(), "")
+first = env or rc.get("model") or by_size or c.get("model") or ""
 chain = list(dict.fromkeys([m for m in [first, *fb] if m]))
 print("\n".join(chain) if chain else "")
 EOF
@@ -93,8 +96,27 @@ EOF
 
 QUOTA_NOTE="NOTE: The previous run of this task stopped because the model ran out of quota. Continue from the current state of the worktree (files already changed are kept): check git status / git diff and AGY_REPORT.md, finish the remaining steps, run the self-checks and update AGY_REPORT.md. Same rules and allowed commands as before."
 
+
+# Bài học tích luỹ của project (.agy/lessons.md) → chèn vào prompt vòng đầu.
+LESSONS_FILE="$PROJECT/.agy/lessons.md"
+lessons_block() {  # lessons_block <kho>: dòng "- …"; dòng có "[kho: X]" chỉ áp cho kho X
+  [[ -s "$LESSONS_FILE" ]] || return 0
+  local body; body="$(python3 - "$LESSONS_FILE" "$1" <<'PY'
+import re, sys
+f, repo = sys.argv[1:]
+for l in open(f, encoding="utf-8"):
+    if not l.lstrip().startswith("-"): continue
+    m = re.search(r"\[(?:kho|repo):\s*([^\]]+)\]", l)
+    if m and repo not in [x.strip() for x in m.group(1).split(",")]: continue
+    print(l.rstrip())
+PY
+)"
+  [[ -n "$body" ]] && printf '\n\n## Lessons from previous tasks in this project (follow them)\n%s\n' "$body"
+  return 0
+}
 cd "$WORKTREE"
 PROMPT="$(cat "$PROMPT_FILE")"; CODE=0
+[[ -z "$CONV" ]] && PROMPT="$PROMPT$(lessons_block "$REPO")"
 for i in "${!CHAIN[@]}"; do
   MODEL="${CHAIN[$i]}"
   N=$(( $(ls -1 "$DIR"/agy-*.json 2>/dev/null | wc -l) + 1 ))

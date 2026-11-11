@@ -1,7 +1,31 @@
 {
   "description": ".NET / ABP",
-  "detect": ["*.sln", "*.slnx", "*.csproj"],
-  "allow": ["command(dotnet restore)", "command(dotnet build)", "command(dotnet test)", "command(dotnet format)",
-            "command(dotnet ef migrations add)"],
-  "test": ["dotnet build", "dotnet test"]
+  "detect": [
+    "*.sln",
+    "*.slnx",
+    "*.csproj"
+  ],
+  "allow": [
+    "command(dotnet restore)",
+    "command(dotnet build)",
+    "command(dotnet test)",
+    "command(dotnet format)",
+    "command(dotnet ef migrations add)"
+  ],
+  "test": [
+    "dotnet build",
+    "dotnet test"
+  ],
+  "suspect": [
+    {
+      "name": "Chuỗi tiếng Việt viết cứng trong C# (nên dùng localization)",
+      "glob": "**/*.cs",
+      "exclude": [
+        "**/Migrations/**",
+        "test/**",
+        "**/*Tests*/**"
+      ],
+      "regex": "\"[^\"\\n]*[À-ỹĐđ][^\"\\n]*\""
+    }
+  ]
 }

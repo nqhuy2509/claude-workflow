@@ -37,7 +37,9 @@ Bộ công cụ: `~/.claude/agy/` — mẫu ở `templates/`, preset quyền ở
 ## Bước 2 — Đề xuất (tiếng Việt) rồi DỪNG
 - Đọc `CLAUDE.md` và đúng phần code liên quan (vừa đủ — tiết kiệm token là mục đích của quy trình).
 - Viết `proposal.md` theo `~/.claude/agy/templates/proposal.md`: mục tiêu, phạm vi, cách làm, bảng phân việc (kho → session → file được phép sửa),
-  tiêu chí nghiệm thu kiểm chứng được, cách kiểm tra, rủi ro.
+  tiêu chí nghiệm thu kiểm chứng được (mỗi tiêu chí gắn test/lệnh chứng minh), cách kiểm tra, rủi ro, và **độ lớn S/M/L**:
+  S = ≤3 file, thay đổi cục bộ; M = một màn/một tính năng; L = nhiều màn, nhiều kho hoặc thay đổi kiến trúc.
+  Độ lớn chọn model (`"model_by_size"` trong config). Việc **S**: đề xuất và brief rút gọn (5–7 dòng mỗi phần).
 - **Việc đụng nhiều kho** (vd backend + frontend): mỗi kho **một session chạy song song**; chốt *Hợp đồng dùng chung*
   (route API, tên/kiểu trường, enum) để các bên khớp nhau.
 - Tóm tắt đề xuất cho người dùng rồi **DỪNG**: `wrap_up` với câu hỏi duyệt, nút **"Duyệt"** / **"Sửa đề xuất"**, `blocked: true`.
@@ -47,10 +49,11 @@ Bộ công cụ: `~/.claude/agy/` — mẫu ở `templates/`, preset quyền ở
 Với **mỗi kho** trong bảng phân việc:
 1. Ghi nhánh hiện tại của kho vào `.agy/tasks/<việc>/<kho>/base.txt`, rồi tạo worktree (không đụng thư mục chính, không cần kho sạch):
    `git -C <đường-dẫn-kho> worktree add -b agy/<tên-việc> <gốc>/.agy-worktrees/<tên-việc>/<kho> HEAD`
-   Ghi đường dẫn tuyệt đối của worktree vào `.agy/tasks/<việc>/<kho>/worktree.txt`.
+   Ghi đường dẫn tuyệt đối của worktree vào `.agy/tasks/<việc>/<kho>/worktree.txt`, độ lớn đã duyệt (S/M/L) vào `.agy/tasks/<việc>/size.txt`.
 2. Viết `.agy/tasks/<việc>/<kho>/brief.md` theo `~/.claude/agy/templates/brief.md`, **hoàn toàn tiếng Anh**: mục tiêu, bối cảnh,
    các bước, *Allowed paths*, hợp đồng dùng chung (nếu nhiều session), quy ước bắt buộc trích từ `CLAUDE.md`, tiêu chí nghiệm thu,
-   lệnh tự kiểm tra, yêu cầu ghi `AGY_REPORT.md`.
+   lệnh tự kiểm tra **có trọng tâm** (chỉ test/analyze của phần thay đổi — bộ test đầy đủ do `verify.sh` chạy), yêu cầu ghi `AGY_REPORT.md`.
+   Không chép lại bài học trong `.agy/lessons.md` vào brief — script tự chèn ở vòng đầu.
 3. **Danh sách lệnh agy được chạy**: ghép giống script (`presets/common.json` + preset của kho + `allow`), chép nguyên văn vào mục
    *Commands* của brief. agy chạy một lệnh ngoài danh sách là **bị chặn và kết thúc lượt ngay** — nên chỉ yêu cầu agy tự kiểm tra
    bằng đúng các lệnh trong danh sách. (Script ghi lại danh sách thực tế vào `allowed-commands.txt` sau mỗi lần chạy để đối chiếu.)
@@ -73,9 +76,11 @@ Không coi báo cáo của agy là đủ. Với mỗi kho, trong worktree:
    **Có `denied_actions` hoặc không có `AGY_REPORT.md`** → agy đã bị dừng giữa chừng vì một lệnh bị chặn. Tự chạy tiếp đúng phiên
    **một lần** (không cần hỏi người dùng): viết `feedback-<n>.md` tiếng Anh nói lệnh đó không được phép, đừng chạy lại, hoàn tất các bước
    còn lại và ghi báo cáo; chạy `run-task.sh <thư-mục-việc> <kho> resume`. Lần này tính vào giới hạn 3 vòng.
-2. `git status --porcelain` + `git diff --stat`: có thay đổi thật không; file nào **ngoài *Allowed paths*** → ghi là vi phạm.
-3. Chạy lệnh `test` của kho (config hoặc preset). Lệnh quá lâu thì lọc theo phần liên quan và ghi rõ đã lọc.
-4. Đọc diff, đối chiếu từng tiêu chí. Việc giao diện: chạy app / simulator và chụp màn hình khi khả thi; việc API: gọi thử.
+2. Chạy `bash ~/.claude/agy/bin/verify.sh <gốc>/.agy/tasks/<việc> <kho>` (nền nếu test lâu) rồi **đọc `verify.md` trước**: phạm vi file,
+   symbol cấm sửa, dòng đáng ngờ theo preset, toàn bộ test (lỗi trùng base được hạ thành 🟡), tóm `AGY_REPORT.md`. Chi tiết test lỗi ở `verify.log`.
+3. **Đọc diff có chọn lọc**: chỉ các chỗ 🔴/🟡 và phần cần cho tiêu chí script không tự kiểm được (`git diff <base> -- <file>` hoặc theo hàm),
+   không đọc toàn bộ diff lớn khi verify đã sạch.
+4. Đối chiếu từng tiêu chí. Việc giao diện: chạy app / simulator và chụp màn hình khi khả thi; việc API: gọi thử.
 5. Nhiều session: kiểm tra các bên khớp *Hợp đồng dùng chung*.
 6. Có `fallback.log` → nêu trong báo cáo: model nào hết quota, chuyển sang model nào, ở lượt nào.
 7. Chuyển `AGY_REPORT.md` từ worktree vào `.agy/tasks/<việc>/<kho>/` (không để lọt vào commit).
@@ -95,6 +100,9 @@ Không coi báo cáo của agy là đủ. Với mỗi kho, trong worktree:
   2. Thư mục chính của kho: đang ở nhánh trong `base.txt` và merge không đụng file người dùng đang sửa dở →
      `git merge --ff-only agy/<tên-việc>` (không được thì `--no-ff`). Khác nhánh hoặc chồng file đang sửa → dừng, hỏi người dùng.
   3. `git worktree remove` + xoá nhánh `agy/<tên-việc>`. **Không push** — người dùng tự quyết.
+- **Bài học**: sau mỗi việc, nếu có Làm lại, lệnh bị chặn, hoặc verify bắt lỗi mà một câu trong brief có thể tránh được → thêm **một dòng tiếng Anh**
+  `- …` (kèm `[kho: <tên>]` nếu chỉ áp cho một kho) vào `<gốc>/.agy/lessons.md` và nói cho người dùng. Không thêm bài học trùng; giữ file ngắn (≤ 30 dòng),
+  gộp/xoá dòng cũ khi cần. Script tự chèn các dòng này vào prompt vòng đầu của agy/codex.
 - **Bỏ**: `git worktree remove --force` + `git branch -D agy/<tên-việc>`; giữ `.agy/tasks/<việc>` làm lịch sử.
 
 ## Nguyên tắc

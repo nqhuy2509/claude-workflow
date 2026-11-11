@@ -9,6 +9,9 @@
 ## Cách làm
 <!-- Mô tả đủ để người không đọc code cũng hiểu sẽ thay đổi gì. -->
 
+## Độ lớn
+S | M | L — <lý do ngắn> (chọn model: S nhanh/rẻ, L mạnh nhất)
+
 ## Phân việc
 | Kho | Session | Executor (agy/codex) | File được phép sửa |
 |---|---|---|
