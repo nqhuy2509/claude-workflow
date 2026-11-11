@@ -7,7 +7,7 @@ KIT="$(cd "$(dirname "$0")" && pwd)"
 CLAUDE_DIR="${CLAUDE_CONFIG_DIR:-$HOME/.claude}"
 
 if [[ "${1:-}" == "--uninstall" ]]; then
-  for p in "$CLAUDE_DIR/commands/agy.md" "$CLAUDE_DIR/commands/agy-model.md" "$CLAUDE_DIR/agy"; do
+  for p in "$CLAUDE_DIR/commands/agy.md" "$CLAUDE_DIR/commands/agy-model.md" "$CLAUDE_DIR/commands/agy-status.md" "$CLAUDE_DIR/agy"; do
     [[ -L "$p" ]] && rm "$p" && echo "đã gỡ $p"
   done
   exit 0
@@ -22,8 +22,9 @@ link() {  # link <đích> <liên kết>
 }
 link "$KIT/commands/agy.md" "$CLAUDE_DIR/commands/agy.md"
 link "$KIT/commands/agy-model.md" "$CLAUDE_DIR/commands/agy-model.md"
+link "$KIT/commands/agy-status.md" "$CLAUDE_DIR/commands/agy-status.md"
 link "$KIT" "$CLAUDE_DIR/agy"
-chmod +x "$KIT/bin/run-agy.sh" "$KIT/bin/agy-model.sh"
+chmod +x "$KIT/bin/run-agy.sh" "$KIT/bin/agy-model.sh" "$KIT/bin/agy-status.sh"
 
 echo
 command -v agy >/dev/null && echo "agy: $(agy --version 2>/dev/null | head -1)" \

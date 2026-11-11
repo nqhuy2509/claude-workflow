@@ -43,10 +43,15 @@ Lần đầu, nếu project chưa có `.agy/config.json`, Claude tự nhận di�
 | Đường dẫn | Vai trò |
 |---|---|
 | `commands/agy.md` | Lệnh `/agy`: các bước, chỗ dừng chờ duyệt, quy tắc |
+| `commands/agy-status.md`, `bin/agy-status.sh` | Xem các việc và trạng thái |
 | `commands/agy-model.md`, `bin/agy-model.sh` | Xem / đổi model agy |
 | `bin/run-agy.sh` | Chạy agy cho một kho; ghép quyền từ preset; tiếp tục phiên (`--conversation`) |
 | `templates/` | `proposal.md` (VI), `brief.md` (EN, kèm mẫu `AGY_REPORT.md`), `report.md` (VI) |
 | `presets/` | Lệnh agy được phép theo loại project: `common`, `flutter`, `dotnet`, `node`, `python` |
+
+## Xem việc đang chạy
+`/agy-status` — bảng mọi việc trong `.agy/tasks/`: kho, trạng thái (ĐANG CHẠY / CHỜ KIỂM TRA / CHỜ QUYẾT / ĐÃ XONG/BỎ / CHƯA GIAO), model, số vòng, lần chạy cuối.
+Chạy tay: `~/.claude/agy/bin/agy-status.sh [gốc-project]`.
 
 ## Chọn model cho agy
 - `/agy-model` — xem model đang dùng và danh sách model (`agy models`).
