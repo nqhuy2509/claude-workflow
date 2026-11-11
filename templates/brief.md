@@ -25,8 +25,11 @@ You are implementing ONE approved task in the git worktree below. Work only insi
 - Follow the repository conventions in `CLAUDE.md` / `AGENTS.md`. Key rules for this task:
   - <copy the 3–6 rules from CLAUDE.md that matter for this change>
 - Keep changes minimal and focused on the goal; no unrelated refactors or formatting churn.
-- Only these commands are permitted: <list from the merged presets, e.g. git status/diff, flutter analyze/test>.
-  Any other command will be denied — do not retry it, just mention it in the report.
+- **Commands:** you may run ONLY commands that start with one of these prefixes:
+  <paste allowed-commands.txt, one per line>
+  Running anything else (including `cd … &&` chains, pipes, or other tools) is auto-denied and **immediately ends
+  your session**, leaving the task unfinished. If a check needs another command, skip it and say so in the report.
+- Create `AGY_REPORT.md` early (Status: IN PROGRESS) and update it as you go, so a report exists even if you stop.
 
 ## Acceptance criteria
 - [ ]

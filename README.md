@@ -56,3 +56,5 @@ agy chạy `--mode accept-edits`: tự sửa file trong worktree, **mọi lệnh
 - Prompt phải gắn vào cờ: `--print="<prompt>"` (đặt cuối); `--print <prompt>` sẽ nuốt nhầm cờ phía sau.
 - macOS không có `timeout`; dùng `--print-timeout 1800s` của agy.
 - Kết quả `--output-format json`: `conversation_id`, `status`, `num_turns`, `denied_actions`.
+- **Một lệnh bị chặn làm agy kết thúc lượt ngay** (`status` vẫn là SUCCESS, các bước sau bị bỏ dở). Vì vậy brief liệt kê chính xác
+  lệnh được phép, và `/agy` tự chạy tiếp đúng phiên một lần khi thấy `denied_actions` hoặc thiếu `AGY_REPORT.md`.

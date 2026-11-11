@@ -47,7 +47,10 @@ Với **mỗi kho** trong bảng phân việc:
    Ghi đường dẫn tuyệt đối của worktree vào `.agy/tasks/<việc>/<kho>/worktree.txt`.
 2. Viết `.agy/tasks/<việc>/<kho>/brief.md` theo `~/.claude/agy/templates/brief.md`, **hoàn toàn tiếng Anh**: mục tiêu, bối cảnh,
    các bước, *Allowed paths*, hợp đồng dùng chung (nếu nhiều session), quy ước bắt buộc trích từ `CLAUDE.md`, tiêu chí nghiệm thu,
-   lệnh tự kiểm tra, danh sách lệnh agy được chạy (đọc từ preset), yêu cầu ghi `AGY_REPORT.md`.
+   lệnh tự kiểm tra, yêu cầu ghi `AGY_REPORT.md`.
+3. **Danh sách lệnh agy được chạy**: ghép giống script (`presets/common.json` + preset của kho + `allow`), chép nguyên văn vào mục
+   *Commands* của brief. agy chạy một lệnh ngoài danh sách là **bị chặn và kết thúc lượt ngay** — nên chỉ yêu cầu agy tự kiểm tra
+   bằng đúng các lệnh trong danh sách. (Script ghi lại danh sách thực tế vào `allowed-commands.txt` sau mỗi lần chạy để đối chiếu.)
 
 ## Bước 4 — Giao cho agy
 - Mỗi kho **một lệnh nền riêng** (`run_in_background: true`); nhiều kho thì chạy **song song**:
@@ -59,6 +62,9 @@ Với **mỗi kho** trong bảng phân việc:
 ## Bước 5 — Kiểm tra độc lập (khi agy xong)
 Không coi báo cáo của agy là đủ. Với mỗi kho, trong worktree:
 1. Đọc `agy-N.json` (`status`, `denied_actions`) và `AGY_REPORT.md`.
+   **Có `denied_actions` hoặc không có `AGY_REPORT.md`** → agy đã bị dừng giữa chừng vì một lệnh bị chặn. Tự chạy tiếp đúng phiên
+   **một lần** (không cần hỏi người dùng): viết `feedback-<n>.md` tiếng Anh nói lệnh đó không được phép, đừng chạy lại, hoàn tất các bước
+   còn lại và ghi báo cáo; chạy `run-agy.sh … <conversation-id>`. Lần này tính vào giới hạn 3 vòng.
 2. `git status --porcelain` + `git diff --stat`: có thay đổi thật không; file nào **ngoài *Allowed paths*** → ghi là vi phạm.
 3. Chạy lệnh `test` của kho (config hoặc preset). Lệnh quá lâu thì lọc theo phần liên quan và ghi rõ đã lọc.
 4. Đọc diff, đối chiếu từng tiêu chí. Việc giao diện: chạy app / simulator và chụp màn hình khi khả thi; việc API: gọi thử.

@@ -8,7 +8,8 @@
 #   <thư-mục-việc>/<tên-kho>/brief.md       hướng dẫn tiếng Anh (vòng đầu)
 #   <thư-mục-việc>/<tên-kho>/feedback-N.md  góp ý mới nhất (khi có conversation-id)
 #   <gốc project>/.agy/config.json          preset + lệnh bổ sung của kho (tuỳ chọn)
-# Ghi: agy-N.json, agy-N.err, settings.json (quyền đã ghép), conversation.txt.
+# Ghi: agy-N.json, agy-N.err, settings.json (quyền đã ghép), allowed-commands.txt, conversation.txt.
+# LƯU Ý: ở chế độ không tương tác, một lệnh bị chặn làm agy KẾT THÚC LƯỢT ngay (bỏ dở các bước sau).
 # Quyền: --mode accept-edits + chỉ các lệnh ghép từ presets/common.json, preset của kho và "allow" trong config.
 set -uo pipefail
 
@@ -50,6 +51,9 @@ for n in ["common", *names]:
 allow += rc.get("allow", [])
 allow = list(dict.fromkeys(allow))
 json.dump({"permissions": {"allow": allow}}, open(out, "w"), indent=2)
+# Danh sách dạng đọc được để Claude chép vào brief (agy chỉ được chạy đúng các tiền tố này).
+with open(os.path.join(os.path.dirname(out), "allowed-commands.txt"), "w") as f:
+    f.write("\n".join(a[len("command("):-1] for a in allow if a.startswith("command(")) + "\n")
 print(f"preset={names or ['(chỉ common)']} lệnh_được_phép={len(allow)}")
 EOF
 
