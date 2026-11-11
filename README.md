@@ -45,9 +45,20 @@ Lần đầu, nếu project chưa có `.agy/config.json`, Claude tự nhận di�
 | `commands/agy.md` | Lệnh `/agy`: các bước, chỗ dừng chờ duyệt, quy tắc |
 | `commands/agy-status.md`, `bin/agy-status.sh` | Xem các việc và trạng thái |
 | `commands/agy-model.md`, `bin/agy-model.sh` | Xem / đổi model agy |
+| `bin/run-task.sh` | Điều phối: chọn executor, resume đúng phiên, chuyển codex khi agy hết quota |
+| `bin/run-codex.sh` | Chạy codex cho một kho (sandbox workspace-write) |
 | `bin/run-agy.sh` | Chạy agy cho một kho; ghép quyền từ preset; tiếp tục phiên (`--conversation`) |
 | `templates/` | `proposal.md` (VI), `brief.md` (EN, kèm mẫu `AGY_REPORT.md`), `report.md` (VI) |
 | `presets/` | Lệnh agy được phép theo loại project: `common`, `flutter`, `dotnet`, `node`, `python` |
+
+## Executor: agy hoặc codex
+Mỗi kho trong một việc do **agy** (mặc định) hoặc **codex** làm; `bin/run-task.sh` chọn và chạy đúng executor.
+- `/agy-model executor codex [kho]` — đổi executor mặc định (chung hoặc một kho). Một lần: `EXECUTOR=codex run-task.sh …`.
+- `/agy-model codex <model>` — model cho codex (`"codex_model"`); không đặt thì dùng mặc định trong `~/.codex/config.toml`.
+- `/agy-model exec-fallback codex` — agy hết quota trên cả chuỗi model → tự chuyển codex (phiên mới, cùng worktree, ghi `fallback.log`).
+- codex chạy `codex exec --sandbox workspace-write -c approval_policy="never"`: chỉ ghi trong worktree, **không mạng**, được tự chạy build/test
+  (khác agy chỉ được chạy lệnh trong danh sách). Claude khôi phục gói trong worktree trước khi giao. Kết quả: `codex-N.jsonl`, `codex-N.last.md`, `session.txt`.
+- Gợi ý: UI / theo thiết kế → agy; backend, sửa lỗi, việc phải chạy test nhiều vòng → codex. Việc hai kho có thể mỗi kho một executor, chạy song song.
 
 ## Xem việc đang chạy
 `/agy-status` — bảng mọi việc trong `.agy/tasks/`: kho, trạng thái (ĐANG CHẠY / CHỜ KIỂM TRA / CHỜ QUYẾT / ĐÃ XONG/BỎ / CHƯA GIAO), model, số vòng, lần chạy cuối.

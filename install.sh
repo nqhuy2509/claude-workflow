@@ -24,10 +24,11 @@ link "$KIT/commands/agy.md" "$CLAUDE_DIR/commands/agy.md"
 link "$KIT/commands/agy-model.md" "$CLAUDE_DIR/commands/agy-model.md"
 link "$KIT/commands/agy-status.md" "$CLAUDE_DIR/commands/agy-status.md"
 link "$KIT" "$CLAUDE_DIR/agy"
-chmod +x "$KIT/bin/run-agy.sh" "$KIT/bin/agy-model.sh" "$KIT/bin/agy-status.sh"
+chmod +x "$KIT/bin/run-agy.sh" "$KIT/bin/agy-model.sh" "$KIT/bin/agy-status.sh" "$KIT/bin/run-codex.sh" "$KIT/bin/run-task.sh"
 
 echo
 command -v agy >/dev/null && echo "agy: $(agy --version 2>/dev/null | head -1)" \
   || echo "CHƯA CÀI agy (Antigravity CLI) — cài và đăng nhập trước khi dùng /agy."
+command -v codex >/dev/null && echo "codex: $(codex --version 2>/dev/null | head -1)" || echo "(tuỳ chọn) chưa cài codex — chỉ dùng executor agy."
 command -v python3 >/dev/null || echo "CHƯA CÓ python3 — run-agy.sh cần python3."
 echo "Xong. Mở project bất kỳ trong Claude Code và gõ: /agy <yêu cầu>"

@@ -9,8 +9,8 @@
 ## Cách làm
 <!-- Mô tả đủ để người không đọc code cũng hiểu sẽ thay đổi gì. -->
 
-## Phân việc cho agy
-| Kho | Session | File được phép sửa |
+## Phân việc
+| Kho | Session | Executor (agy/codex) | File được phép sửa |
 |---|---|---|
 | <kho> | 1 | `<đường dẫn/glob>` |
 

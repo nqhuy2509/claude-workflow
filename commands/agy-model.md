@@ -13,6 +13,8 @@ Dùng script `~/.claude/agy/bin/agy-model.sh`, chạy từ gốc project (thư m
   Có `kho` → đặt riêng cho kho đó. Sau khi đặt, chạy `show` để xác nhận.
 - `unset [kho]`: bỏ đặt, quay về mặc định (của config chung hoặc của agy).
 - `fallback <m1,m2,…> [kho]` / `fallback none [kho]`: đặt / bỏ chuỗi model dự phòng khi hết quota (khớp tên gần đúng như `set`).
+- `executor <agy|codex|none> [kho]`: executor mặc định. `codex <model|none> [kho]`: model cho codex (không có lệnh liệt kê — dùng tên người dùng đưa).
+  `exec-fallback <codex|none>`: agy hết quota trên cả chuỗi model → chuyển codex.
   Khi chạy, agy hết quota → `run-agy.sh` tự chuyển model kế tiếp, tiếp tục đúng phiên, ghi `fallback.log`.
 
 Model được ghi vào `.agy/config.json` (`"model"` chung hoặc trong `repos.<kho>`). Lần chạy agy sau của `/agy` sẽ dùng nó;

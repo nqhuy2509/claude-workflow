@@ -7,7 +7,7 @@ Yêu cầu: $ARGUMENTS
 Bạn (Claude) lập đề xuất, viết hướng dẫn và kiểm tra. **agy viết code — bạn không tự sửa code sản phẩm.**
 Nói với người dùng bằng **tiếng Việt**; mọi thứ gửi cho agy bằng **tiếng Anh**.
 
-Bộ công cụ: `~/.claude/agy/` — mẫu ở `templates/`, preset quyền ở `presets/`, script `bin/run-agy.sh`.
+Bộ công cụ: `~/.claude/agy/` — mẫu ở `templates/`, preset quyền ở `presets/`, script `bin/run-task.sh` (điều phối executor **agy** hoặc **codex**: `run-agy.sh`, `run-codex.sh`).
 **Gốc project** = thư mục đang mở trong Claude Code (thư mục làm việc hiện tại).
 
 ## Bước 0 — Cấu hình project
@@ -26,6 +26,9 @@ Bộ công cụ: `~/.claude/agy/` — mẫu ở `templates/`, preset quyền ở
   Đề xuất nội dung `config.json` ngay trong Bước 2 và chỉ ghi file khi người dùng duyệt.
 - Đảm bảo `.agy/tasks/` và `.agy-worktrees/` không bị commit: nếu gốc là kho Git thì thêm vào `.gitignore` của gốc (khi tạo việc đầu tiên).
 - Quy ước code của từng kho lấy từ `CLAUDE.md` / `AGENTS.md` của kho đó.
+- **Executor**: `"executor"` (chung hoặc theo kho) = `agy` (mặc định) | `codex`; `"executor_fallback": "codex"` = agy hết quota cả chuỗi model
+  thì chuyển codex. Gợi ý khi đề xuất: UI / làm theo thiết kế → agy; backend, sửa lỗi, việc cần chạy test nhiều vòng → codex.
+  Người dùng đổi được bằng `/agy-model executor …` hoặc ngay lúc duyệt đề xuất.
 
 ## Bước 1 — Mở việc
 - Tạo `.agy/tasks/<yyyyMMdd-HHmm>-<ten-ngan-khong-dau>/` trong gốc project.
@@ -54,7 +57,10 @@ Với **mỗi kho** trong bảng phân việc:
 
 ## Bước 4 — Giao cho agy
 - Mỗi kho **một lệnh nền riêng** (`run_in_background: true`); nhiều kho thì chạy **song song**:
-  `bash ~/.claude/agy/bin/run-agy.sh <gốc>/.agy/tasks/<việc> <kho>`
+  `bash ~/.claude/agy/bin/run-task.sh <gốc>/.agy/tasks/<việc> <kho>` (executor theo bảng phân việc: thêm `EXECUTOR=codex` phía trước nếu khác config)
+- **codex** chạy `--sandbox workspace-write` (chỉ ghi trong worktree, **không có mạng**): trước khi giao, Claude tự chạy bước khôi phục gói
+  trong worktree (`flutter pub get` / `npm ci` / `dotnet restore`…). codex được tự chạy build/test, nên brief giữ mục *Commands* như cũ
+  (script tự thêm ghi chú cho codex). Không bao giờ dùng `--dangerously-bypass-approvals-and-sandbox`, không bật mạng khi chưa hỏi người dùng.
 - agy chạy `--mode accept-edits`, chỉ được dùng lệnh ghép từ `presets/common.json` + preset của kho + `allow` trong config.
   Model theo `"model"` trong config (đổi bằng `/agy-model`); nêu model đang dùng trong dòng báo người dùng.
   Hết quota → script tự chuyển model theo `"model_fallback"` và tiếp tục phiên; thoát mã 4 = đã thử hết chuỗi → báo người dùng.
@@ -63,10 +69,10 @@ Với **mỗi kho** trong bảng phân việc:
 
 ## Bước 5 — Kiểm tra độc lập (khi agy xong)
 Không coi báo cáo của agy là đủ. Với mỗi kho, trong worktree:
-1. Đọc `agy-N.json` (`status`, `denied_actions`) và `AGY_REPORT.md`.
+1. Đọc kết quả lượt cuối — agy: `agy-N.json` (`status`, `denied_actions`); codex: `codex-N.jsonl` (`turn.completed`/`turn.failed`) và `codex-N.last.md` — cùng `AGY_REPORT.md`.
    **Có `denied_actions` hoặc không có `AGY_REPORT.md`** → agy đã bị dừng giữa chừng vì một lệnh bị chặn. Tự chạy tiếp đúng phiên
    **một lần** (không cần hỏi người dùng): viết `feedback-<n>.md` tiếng Anh nói lệnh đó không được phép, đừng chạy lại, hoàn tất các bước
-   còn lại và ghi báo cáo; chạy `run-agy.sh … <conversation-id>`. Lần này tính vào giới hạn 3 vòng.
+   còn lại và ghi báo cáo; chạy `run-task.sh <thư-mục-việc> <kho> resume`. Lần này tính vào giới hạn 3 vòng.
 2. `git status --porcelain` + `git diff --stat`: có thay đổi thật không; file nào **ngoài *Allowed paths*** → ghi là vi phạm.
 3. Chạy lệnh `test` của kho (config hoặc preset). Lệnh quá lâu thì lọc theo phần liên quan và ghi rõ đã lọc.
 4. Đọc diff, đối chiếu từng tiêu chí. Việc giao diện: chạy app / simulator và chụp màn hình khi khả thi; việc API: gọi thử.
@@ -81,7 +87,7 @@ Không coi báo cáo của agy là đủ. Với mỗi kho, trong worktree:
 
 ## Bước 7 — Theo lựa chọn của người dùng
 - **Làm lại**: viết góp ý **tiếng Anh**, cụ thể (tiêu chí trượt, cách sửa) vào `.agy/tasks/<việc>/<kho>/feedback-<n>.md`, rồi chạy tiếp đúng phiên:
-  `bash ~/.claude/agy/bin/run-agy.sh <gốc>/.agy/tasks/<việc> <kho> "$(cat <gốc>/.agy/tasks/<việc>/<kho>/conversation.txt)"`
+  `bash ~/.claude/agy/bin/run-task.sh <gốc>/.agy/tasks/<việc> <kho> resume` (tự dùng đúng executor + phiên trong `executor.txt`)
   Quay lại Bước 5. **Tối đa 3 vòng** mỗi kho; quá thì dừng và hỏi người dùng.
 - **Merge** (Claude commit luôn):
   1. Trong worktree: `git add` đúng các file đã đổi (không gồm `AGY_REPORT.md`), commit theo `commit_style` trong config,
