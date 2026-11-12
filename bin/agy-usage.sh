@@ -1,24 +1,39 @@
 #!/usr/bin/env bash
 # Thống kê token đã dùng cho các việc /crew.
 #
-#   agy-usage.sh [gốc-project] [lọc-tên-việc | --all] [--write]
+#   agy-usage.sh [gốc-project] [số | từ-khoá | --list | --all] [--write]
 #
-# Không lọc: việc mới nhất. --all: mọi việc + tổng. --write: ghi <việc>/usage.md.
+# Không tham số: bảng mọi việc (số thứ tự, tên, tiêu đề, token) + chi tiết việc mới nhất.
+# số: việc thứ N trong bảng. từ-khoá: khớp tên thư mục hoặc tiêu đề đề xuất, không phân biệt dấu/hoa thường.
+# --list: chỉ bảng. --all: chi tiết mọi việc + tổng. --write: ghi <việc>/usage.md.
 # Nguồn: agy-N.json ("usage"), codex-N.jsonl (sự kiện turn.completed), và phần của Claude ước tính từ transcript
 # của các phiên Claude Code trong project (~/.claude/projects/<project>/*.jsonl): cộng các lượt trả lời từ lần đầu
 # transcript nhắc tên việc đến lúc file cuối của việc được ghi (+15 phút), bỏ trùng theo message id. Phần Claude là ƯỚC TÍNH (có thể lẫn việc khác làm xen kẽ).
 set -uo pipefail
 ROOT="$PWD"; FILTER=""; WRITE=""
-for a in "$@"; do case "$a" in --write) WRITE=1;; --all) FILTER="--all";; *) if [[ -d "$a/.agy" ]]; then ROOT="$a"; else FILTER="$a"; fi;; esac; done
+for a in "$@"; do case "$a" in --write) WRITE=1;; --all) FILTER="--all";; --list) FILTER="--list";; *) if [[ -d "$a/.agy" ]]; then ROOT="$a"; else FILTER="${FILTER:+$FILTER }$a"; fi;; esac; done
 ROOT="$(cd "$ROOT" && pwd)"
 CDIR="${CLAUDE_CONFIG_DIR:-$HOME/.claude}/projects/$(sed 's|[^A-Za-z0-9]|-|g' <<<"$ROOT")"
 python3 - "$ROOT" "$FILTER" "$WRITE" "$CDIR" <<'PY'
 import json, os, re, sys, glob
 root, flt, write, cdir = sys.argv[1:]
+import unicodedata
 tasks = sorted(p for p in glob.glob(os.path.join(root, ".agy/tasks/*/")) if not p.rstrip("/").endswith("archive"))
-if flt and flt != "--all": tasks = [t for t in tasks if flt in os.path.basename(t.rstrip("/"))]
-elif not flt: tasks = tasks[-1:]
-if not tasks: print("Không có việc nào khớp."); sys.exit()
+plain = lambda x: unicodedata.normalize("NFD", x.lower()).encode("ascii", "ignore").decode().replace("đ", "d")
+def title(t):  # tiêu đề tiếng Việt từ proposal.md ("# Đề xuất: …")
+    try:
+        for l in open(os.path.join(t, "proposal.md"), encoding="utf-8"):
+            if l.startswith("# "): return l[2:].split(":", 1)[-1].strip()
+    except Exception: pass
+    return ""
+LIST_ONLY = False
+if flt == "--list": LIST_ONLY = True
+elif flt and flt != "--all":
+    if flt.isdigit() and 1 <= int(flt) <= len(tasks): tasks = [tasks[int(flt) - 1]]
+    else:
+        words = plain(flt).replace("-", " ").split()
+        tasks = [t for t in tasks if all(w in plain(os.path.basename(t.rstrip("/")) + " " + title(t)).replace("-", " ") for w in words)]
+if not tasks: print(f"Không có việc nào khớp '{flt}'. Xem danh sách: agy-usage.sh --list"); sys.exit()
 
 def k(n):
     n = n or 0
@@ -83,6 +98,18 @@ def claude_usage(name, tdir):
         sessions += used
     return tot, sessions
 
+def list_table(all_tasks, latest_detail):
+    print("| # | Việc | Tiêu đề | Executor (in+out) | Claude (ước tính) |\n|---|---|---|---|---|")
+    for i, t in enumerate(all_tasks, 1):
+        rows = executor_runs(t); c, _ = claude_usage(os.path.basename(t.rstrip("/")), t)
+        ex = sum(r["inp"] + r["out"] for r in rows)
+        print(f"| {i} | {os.path.basename(t.rstrip('/'))} | {title(t)[:50]} | {k(ex) if rows else '—'} | {k(c['inp'] + c['write'] + c['out']) if c['calls'] else '—'} |")
+    print("\nXem chi tiết: thêm số thứ tự (vd `2`) hoặc từ khoá trong tên/tiêu đề (không cần dấu, vd `tong cong`).\n")
+
+if LIST_ONLY: list_table(tasks, False); sys.exit()
+if not flt and len(tasks) > 1:
+    list_table(tasks, True); tasks = tasks[-1:]
+    print("Chi tiết việc mới nhất:\n")
 grand = dict(inp=0, out=0, think=0, cache=0, cin=0, cwrite=0, ccache=0, cout=0)
 for t in tasks:
     name = os.path.basename(t.rstrip("/")); rows = executor_runs(t); c, ns = claude_usage(name, t)

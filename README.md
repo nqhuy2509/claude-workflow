@@ -92,7 +92,8 @@ Mỗi kho trong một việc do **agy** (mặc định) hoặc **codex** làm; `
   Worktree còn thay đổi / nhánh chưa merge chỉ được báo, không bị đụng.
 
 ## Token đã dùng
-- `/crew-usage [tên-việc | --all]` (`bin/agy-usage.sh [gốc] [lọc|--all] [--write]`): token theo từng lượt — agy (`usage` trong `agy-N.json`),
+- `/crew-usage [số | từ khoá | --all]` (`bin/agy-usage.sh [gốc] [số|từ-khoá|--list|--all] [--write]`): không tham số → bảng mọi việc có số thứ tự
+  và tiêu đề tiếng Việt + chi tiết việc mới nhất; chọn bằng số hoặc từ khoá không dấu (vd `tong cong`). Chi tiết: token theo từng lượt — agy (`usage` trong `agy-N.json`),
   codex (`turn.completed` trong `codex-N.jsonl`) — kèm model, thời gian; phần Claude **ước tính** từ transcript phiên (`~/.claude/projects/…`)
   trong khoảng từ lần đầu nhắc tên việc đến khi file cuối của việc được ghi (+15 phút). Cache đọc tách riêng.
 - Mặc định `/crew` chạy nó khi báo cáo (Bước 6), ghi `usage.md` và đưa phần tổng vào `report.md`.
