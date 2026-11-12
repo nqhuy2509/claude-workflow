@@ -1,5 +1,5 @@
 ---
-description: Xem các việc agy của project này và trạng thái (đang chạy, chờ kiểm tra, chờ quyết, đã xong)
+description: Xem các việc agent (agy/codex) của project này và trạng thái (đang chạy, chờ kiểm tra, chờ quyết, đã xong)
 ---
 Chạy `~/.claude/agy/bin/agy-status.sh` từ gốc project (thư mục đang mở) rồi trình bày bảng bằng tiếng Việt.
 - **ĐANG CHẠY (thời gian)**: tiến trình agy còn sống. **CHỜ KIỂM TRA**: agy xong, Claude chưa kiểm tra (chưa có `report.md`).

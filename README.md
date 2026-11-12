@@ -1,27 +1,38 @@
 # agy-workflow
 
-Quy trình làm việc **Claude lập kế hoạch & kiểm tra — Antigravity (`agy`) viết code**, dùng chung cho mọi project.
+Quy trình làm việc **Claude lập kế hoạch & kiểm tra — agent viết code (Antigravity `agy` hoặc `codex`)**, dùng chung cho mọi project.
 
 ```
-Bạn ─/agy <yêu cầu>─► Claude: đề xuất tiếng Việt ─► Bạn duyệt
-                      Claude: brief tiếng Anh + git worktree riêng
-                      agy:    làm trong worktree (--mode accept-edits), ghi AGY_REPORT.md
-                      Claude: kiểm tra độc lập (phạm vi file, test, chạy thử) ─► báo cáo tiếng Việt
+Bạn ─/agent <yêu cầu>─► Claude: đề xuất tiếng Việt ─► Bạn duyệt
+                       Claude: brief tiếng Anh + git worktree riêng
+                       agy/codex: làm trong worktree, ghi AGY_REPORT.md
+                       Claude: kiểm tra độc lập (verify.sh, test, chạy thử) ─► báo cáo tiếng Việt + token
 Bạn: Merge (Claude commit + merge, không push) · Làm lại (góp ý, tối đa 3 vòng) · Bỏ
 ```
-Việc đụng nhiều kho (vd backend + frontend) → mỗi kho một session agy chạy song song, có *hợp đồng dùng chung*.
+Việc đụng nhiều kho (vd backend + frontend) → mỗi kho một session chạy song song, có *hợp đồng dùng chung*.
+
+## Lệnh
+| Lệnh | Việc |
+|---|---|
+| `/agent <yêu cầu>` | Quy trình đầy đủ; executor mỗi kho theo config / loại việc (đổi được lúc duyệt) |
+| `/agy <yêu cầu>` | Như `/agent`, mọi kho do **agy** làm |
+| `/codex <yêu cầu>` | Như `/agent`, mọi kho do **codex** làm |
+| `/agent-status` | Các việc và trạng thái (đang chạy, chờ kiểm tra, chờ quyết, đã xong) |
+| `/agent-config` | Executor, model agy/codex, model theo độ lớn S/M/L, chuỗi dự phòng khi hết quota |
+| `/agent-usage` | Token đã dùng theo việc |
+| `/agent-clean` | Dọn worktree, nhánh `agy/*` đã merge, việc cũ |
 
 ## Cài đặt (mỗi máy một lần)
 ```bash
 git clone <url-kho-này> ~/Developer/agy-workflow
 ~/Developer/agy-workflow/install.sh
 ```
-Cần: Claude Code, `agy` (Antigravity CLI) đã đăng nhập, `python3`, và công cụ build của project (flutter, dotnet, node…).
-`install.sh` tạo symlink `~/.claude/commands/agy.md` và `~/.claude/agy` → kho này. Cập nhật: `git pull` là xong.
+Cần: Claude Code, ít nhất một executor đã đăng nhập (`agy` và/hoặc `codex`), `python3`, và công cụ build của project (flutter, dotnet, node…).
+`install.sh` tạo symlink cho mọi lệnh trong `commands/` vào `~/.claude/commands/`, và `~/.claude/agy` → kho này (tự gỡ symlink lệnh cũ đã đổi tên). Cập nhật: `git pull` là xong.
 Gỡ: `./install.sh --uninstall`.
 
 ## Dùng trong một project
-Mở project trong Claude Code, gõ `/agy <yêu cầu bằng tiếng Việt>`.
+Mở project trong Claude Code, gõ `/agent <yêu cầu bằng tiếng Việt>`.
 
 Lần đầu, nếu project chưa có `.agy/config.json`, Claude tự nhận diện kho + loại project và đề xuất file cấu hình để bạn duyệt:
 ```json
@@ -42,12 +53,12 @@ Lần đầu, nếu project chưa có `.agy/config.json`, Claude tự nhận di�
 ## Cấu trúc
 | Đường dẫn | Vai trò |
 |---|---|
-| `commands/agy.md` | Lệnh `/agy`: các bước, chỗ dừng chờ duyệt, quy tắc |
-| `commands/agy-status.md`, `bin/agy-status.sh` | Xem các việc và trạng thái |
-| `commands/agy-model.md`, `bin/agy-model.sh` | Xem / đổi model agy |
+| `commands/agent.md` | Lệnh `/agent`: các bước, chỗ dừng chờ duyệt, quy tắc |
+| `commands/agent-status.md`, `bin/agy-status.sh` | Xem các việc và trạng thái |
+| `commands/agent-config.md`, `bin/agy-model.sh` | Xem / đổi model agy |
 | `bin/preflight.sh` | Kiểm tra đầu vào trước khi giao |
-| `commands/agy-clean.md`, `bin/agy-clean.sh` | Dọn worktree/nhánh/việc cũ |
-| `commands/agy-usage.md`, `bin/agy-usage.sh` | Thống kê token theo việc |
+| `commands/agent-clean.md`, `bin/agy-clean.sh` | Dọn worktree/nhánh/việc cũ |
+| `commands/agent-usage.md`, `bin/agy-usage.sh` | Thống kê token theo việc |
 | `bin/verify.sh` | Kiểm tra tự động một kho → `verify.md` |
 | `bin/run-task.sh` | Điều phối: chọn executor, resume đúng phiên, chuyển codex khi agy hết quota |
 | `bin/run-codex.sh` | Chạy codex cho một kho (sandbox workspace-write) |
@@ -57,9 +68,9 @@ Lần đầu, nếu project chưa có `.agy/config.json`, Claude tự nhận di�
 
 ## Executor: agy hoặc codex
 Mỗi kho trong một việc do **agy** (mặc định) hoặc **codex** làm; `bin/run-task.sh` chọn và chạy đúng executor.
-- `/agy-model executor codex [kho]` — đổi executor mặc định (chung hoặc một kho). Một lần: `EXECUTOR=codex run-task.sh …`.
-- `/agy-model codex <model>` — model cho codex (`"codex_model"`); không đặt thì dùng mặc định trong `~/.codex/config.toml`.
-- `/agy-model exec-fallback codex` — agy hết quota trên cả chuỗi model → tự chuyển codex (phiên mới, cùng worktree, ghi `fallback.log`).
+- `/agent-config executor codex [kho]` — đổi executor mặc định (chung hoặc một kho). Một lần: `EXECUTOR=codex run-task.sh …`.
+- `/agent-config codex <model>` — model cho codex (`"codex_model"`); không đặt thì dùng mặc định trong `~/.codex/config.toml`.
+- `/agent-config exec-fallback codex` — agy hết quota trên cả chuỗi model → tự chuyển codex (phiên mới, cùng worktree, ghi `fallback.log`).
 - codex chạy `codex exec --sandbox workspace-write -c approval_policy="never"`: chỉ ghi trong worktree, **không mạng**, được tự chạy build/test
   (khác agy chỉ được chạy lệnh trong danh sách). Claude khôi phục gói trong worktree trước khi giao. Kết quả: `codex-N.jsonl`, `codex-N.last.md`, `session.txt`.
 - Gợi ý: UI / theo thiết kế → agy; backend, sửa lỗi, việc phải chạy test nhiều vòng → codex. Việc hai kho có thể mỗi kho một executor, chạy song song.
@@ -68,7 +79,7 @@ Mỗi kho trong một việc do **agy** (mặc định) hoặc **codex** làm; `
 - **Kiểm tra tự động** `bin/verify.sh <việc> <kho>` → `verify.md`: file ngoài *Allowed paths*, symbol cấm sửa (dòng `Do NOT change \`A\`` trong brief),
   dòng mới đáng ngờ theo preset (`"suspect"`: chuỗi viết cứng, màu hex, định dạng số…), chạy toàn bộ test (lỗi giống hệt base → 🟡 "có sẵn"),
   tóm `AGY_REPORT.md`. Claude đọc bảng này rồi chỉ đọc diff ở chỗ cần.
-- **Model theo độ lớn việc**: đề xuất ghi S/M/L → `<việc>/size.txt` → `"model_by_size"` (`/agy-model size S gemini-3.8-flash-high`).
+- **Model theo độ lớn việc**: đề xuất ghi S/M/L → `<việc>/size.txt` → `"model_by_size"` (`/agent-config size S gemini-3.8-flash-high`).
 - **Test có trọng tâm**: brief chỉ cho agy chạy test của phần thay đổi; bộ đầy đủ chạy một lần trong `verify.sh`.
 - **Bài học** `.agy/lessons.md` của project: mỗi dòng `- …` (tiếng Anh, `[kho: X]` để giới hạn) tự chèn vào prompt vòng đầu; Claude thêm dòng sau mỗi lần Làm lại / bị chặn lệnh.
 
@@ -76,25 +87,25 @@ Mỗi kho trong một việc do **agy** (mặc định) hoặc **codex** làm; `
 - **Preflight** (`bin/preflight.sh`, tự chạy trong `run-task.sh`): brief đủ mục (*Allowed paths*, *Acceptance criteria*, *Self-check*, `AGY_REPORT.md`,
   không còn chỗ trống `<…>`), worktree tồn tại và ở nhánh `agy/*` (không phải thư mục chính), resume có `feedback-*.md`,
   executor đã cài + đăng nhập, không có agy/codex khác đang chạy trên worktree. Lỗi → thoát mã 5, không chạy.
-- **`/agy-clean`** (`bin/agy-clean.sh [gốc] [--apply] [--days N]`): mặc định chỉ liệt kê. `--apply` dọn phần an toàn — worktree sạch đã merge,
+- **`/agent-clean`** (`bin/agy-clean.sh [gốc] [--apply] [--days N]`): mặc định chỉ liệt kê. `--apply` dọn phần an toàn — worktree sạch đã merge,
   nhánh `agy/*` đã merge (`branch -d`), thư mục rỗng, worktree tạm của verify, `worktree prune`, việc cũ hơn N ngày (30) → `.agy/tasks/archive/`.
   Worktree còn thay đổi / nhánh chưa merge chỉ được báo, không bị đụng.
 
 ## Token đã dùng
-- `/agy-usage [tên-việc | --all]` (`bin/agy-usage.sh [gốc] [lọc|--all] [--write]`): token theo từng lượt — agy (`usage` trong `agy-N.json`),
+- `/agent-usage [tên-việc | --all]` (`bin/agy-usage.sh [gốc] [lọc|--all] [--write]`): token theo từng lượt — agy (`usage` trong `agy-N.json`),
   codex (`turn.completed` trong `codex-N.jsonl`) — kèm model, thời gian; phần Claude **ước tính** từ transcript phiên (`~/.claude/projects/…`)
   trong khoảng từ lần đầu nhắc tên việc đến khi file cuối của việc được ghi (+15 phút). Cache đọc tách riêng.
-- Mặc định `/agy` chạy nó khi báo cáo (Bước 6), ghi `usage.md` và đưa phần tổng vào `report.md`.
+- Mặc định `/agent` chạy nó khi báo cáo (Bước 6), ghi `usage.md` và đưa phần tổng vào `report.md`.
 
 ## Xem việc đang chạy
-`/agy-status` — bảng mọi việc trong `.agy/tasks/`: kho, trạng thái (ĐANG CHẠY / CHỜ KIỂM TRA / CHỜ QUYẾT / ĐÃ XONG/BỎ / CHƯA GIAO), model, số vòng, lần chạy cuối.
+`/agent-status` — bảng mọi việc trong `.agy/tasks/`: kho, trạng thái (ĐANG CHẠY / CHỜ KIỂM TRA / CHỜ QUYẾT / ĐÃ XONG/BỎ / CHƯA GIAO), model, số vòng, lần chạy cuối.
 Chạy tay: `~/.claude/agy/bin/agy-status.sh [gốc-project]`.
 
 ## Chọn model cho agy
-- `/agy-model` — xem model đang dùng và danh sách model (`agy models`).
-- `/agy-model set claude-opus-5-5-high` — đặt model mặc định cho project; `/agy-model set gemini-3.8-flash-high libra-app` — riêng một kho.
-- `/agy-model unset [kho]` — về mặc định. Ghi vào `"model"` trong `.agy/config.json`.
-- **Tự chuyển model khi hết quota**: `/agy-model fallback claude-opus-5-5-high,gemini-4-argon-high,claude-sonnet-5-5-high,gemini-3.8-flash-high`
+- `/agent-config` — xem model đang dùng và danh sách model (`agy models`).
+- `/agent-config set claude-opus-5-5-high` — đặt model mặc định cho project; `/agent-config set gemini-3.8-flash-high libra-app` — riêng một kho.
+- `/agent-config unset [kho]` — về mặc định. Ghi vào `"model"` trong `.agy/config.json`.
+- **Tự chuyển model khi hết quota**: `/agent-config fallback claude-opus-5-5-high,gemini-4-argon-high,claude-sonnet-5-5-high,gemini-3.8-flash-high`
   → ghi `"model_fallback"` vào config. agy hết quota (nhận diện qua `quota`, `rate limit`, `RESOURCE_EXHAUSTED`, `429`… trong kết quả)
   → `run-agy.sh` chuyển model kế tiếp, **tiếp tục đúng phiên** (không được thì mở phiên mới trên worktree cũ), ghi `fallback.log`.
   Thử hết chuỗi vẫn hết quota → thoát mã 4.
@@ -110,4 +121,4 @@ agy chạy `--mode accept-edits`: tự sửa file trong worktree, **mọi lệnh
 - macOS không có `timeout`; dùng `--print-timeout 1800s` của agy.
 - Kết quả `--output-format json`: `conversation_id`, `status`, `num_turns`, `denied_actions`.
 - **Một lệnh bị chặn làm agy kết thúc lượt ngay** (`status` vẫn là SUCCESS, các bước sau bị bỏ dở). Vì vậy brief liệt kê chính xác
-  lệnh được phép, và `/agy` tự chạy tiếp đúng phiên một lần khi thấy `denied_actions` hoặc thiếu `AGY_REPORT.md`.
+  lệnh được phép, và `/agent` tự chạy tiếp đúng phiên một lần khi thấy `denied_actions` hoặc thiếu `AGY_REPORT.md`.

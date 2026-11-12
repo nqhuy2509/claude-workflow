@@ -1,5 +1,5 @@
 ---
-description: Xem danh sách model của agy và đổi model agy dùng cho project này
+description: Cấu hình agent cho project — executor (agy/codex), model agy/codex, model theo độ lớn việc, chuỗi dự phòng khi hết quota
 argument-hint: "[list | show | set <model> [kho] | unset [kho]]"
 ---
 Tham số: $ARGUMENTS
@@ -17,5 +17,5 @@ Dùng script `~/.claude/agy/bin/agy-model.sh`, chạy từ gốc project (thư m
   `exec-fallback <codex|none>`: agy hết quota trên cả chuỗi model → chuyển codex.
   Khi chạy, agy hết quota → `run-agy.sh` tự chuyển model kế tiếp, tiếp tục đúng phiên, ghi `fallback.log`.
 
-Model được ghi vào `.agy/config.json` (`"model"` chung hoặc trong `repos.<kho>`). Lần chạy agy sau của `/agy` sẽ dùng nó;
+Model được ghi vào `.agy/config.json` (`"model"` chung hoặc trong `repos.<kho>`). Lần chạy agy sau của `/agent` sẽ dùng nó;
 một lần chạy riêng có thể ghi đè bằng biến `AGY_MODEL=<mã>`. Model đã dùng cho mỗi lượt được ghi ở `.agy/tasks/<việc>/<kho>/model.txt`.
