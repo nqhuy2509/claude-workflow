@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Dọn những gì quy trình /agent để lại. Mặc định CHỈ LIỆT KÊ; thêm --apply mới thực hiện.
+# Dọn những gì quy trình /crew để lại. Mặc định CHỈ LIỆT KÊ; thêm --apply mới thực hiện.
 #
 #   agy-clean.sh [gốc-project] [--apply] [--days N]
 #

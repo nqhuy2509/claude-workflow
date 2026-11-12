@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Thống kê token đã dùng cho các việc /agent.
+# Thống kê token đã dùng cho các việc /crew.
 #
 #   agy-usage.sh [gốc-project] [lọc-tên-việc | --all] [--write]
 #

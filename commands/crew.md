@@ -32,7 +32,7 @@ Bộ công cụ: `~/.claude/agy/` — mẫu ở `templates/`, preset quyền ở
 - Quy ước code của từng kho lấy từ `CLAUDE.md` / `AGENTS.md` của kho đó.
 - **Executor**: `"executor"` (chung hoặc theo kho) = `agy` (mặc định) | `codex`; `"executor_fallback": "codex"` = agy hết quota cả chuỗi model
   thì chuyển codex. Gợi ý khi đề xuất: UI / làm theo thiết kế → agy; backend, sửa lỗi, việc cần chạy test nhiều vòng → codex.
-  Người dùng đổi được bằng `/agent-config executor …` hoặc ngay lúc duyệt đề xuất.
+  Người dùng đổi được bằng `/crew-config executor …` hoặc ngay lúc duyệt đề xuất.
 
 ## Bước 1 — Mở việc
 - Tạo `.agy/tasks/<yyyyMMdd-HHmm>-<ten-ngan-khong-dau>/` trong gốc project.
@@ -71,7 +71,7 @@ Với **mỗi kho** trong bảng phân việc:
   trong worktree (`flutter pub get` / `npm ci` / `dotnet restore`…). codex được tự chạy build/test, nên brief giữ mục *Commands* như cũ
   (script tự thêm ghi chú cho codex). Không bao giờ dùng `--dangerously-bypass-approvals-and-sandbox`, không bật mạng khi chưa hỏi người dùng.
 - agy chạy `--mode accept-edits`, chỉ được dùng lệnh ghép từ `presets/common.json` + preset của kho + `allow` trong config.
-  Model theo `"model"` trong config (đổi bằng `/agent-config`); nêu model đang dùng trong dòng báo người dùng.
+  Model theo `"model"` trong config (đổi bằng `/crew-config`); nêu model đang dùng trong dòng báo người dùng.
   Hết quota → script tự chuyển model theo `"model_fallback"` và tiếp tục phiên; thoát mã 4 = đã thử hết chuỗi → báo người dùng.
   Giới hạn mặc định 30 phút (`AGY_TIMEOUT=…s` để đổi).
 - Báo người dùng một dòng: đã giao cho agy, đang chờ. **Không poll** — chờ thông báo tiến trình kết thúc.
@@ -111,7 +111,7 @@ Không coi báo cáo của agy là đủ. Với mỗi kho, trong worktree:
 - **Bài học**: sau mỗi việc, nếu có Làm lại, lệnh bị chặn, hoặc verify bắt lỗi mà một câu trong brief có thể tránh được → thêm **một dòng tiếng Anh**
   `- …` (kèm `[kho: <tên>]` nếu chỉ áp cho một kho) vào `<gốc>/.agy/lessons.md` và nói cho người dùng. Không thêm bài học trùng; giữ file ngắn (≤ 30 dòng),
   gộp/xoá dòng cũ khi cần. Script tự chèn các dòng này vào prompt vòng đầu của agy/codex.
-- Thỉnh thoảng (hoặc khi người dùng hỏi) gợi ý `/agent-clean` để dọn phần sót lại.
+- Thỉnh thoảng (hoặc khi người dùng hỏi) gợi ý `/crew-clean` để dọn phần sót lại.
 - **Bỏ**: `git worktree remove --force` + `git branch -D agy/<tên-việc>`; giữ `.agy/tasks/<việc>` làm lịch sử.
 
 ## Nguyên tắc

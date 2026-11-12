@@ -17,5 +17,5 @@ Dùng script `~/.claude/agy/bin/agy-model.sh`, chạy từ gốc project (thư m
   `exec-fallback <codex|none>`: agy hết quota trên cả chuỗi model → chuyển codex.
   Khi chạy, agy hết quota → `run-agy.sh` tự chuyển model kế tiếp, tiếp tục đúng phiên, ghi `fallback.log`.
 
-Model được ghi vào `.agy/config.json` (`"model"` chung hoặc trong `repos.<kho>`). Lần chạy agy sau của `/agent` sẽ dùng nó;
+Model được ghi vào `.agy/config.json` (`"model"` chung hoặc trong `repos.<kho>`). Lần chạy agy sau của `/crew` sẽ dùng nó;
 một lần chạy riêng có thể ghi đè bằng biến `AGY_MODEL=<mã>`. Model đã dùng cho mỗi lượt được ghi ở `.agy/tasks/<việc>/<kho>/model.txt`.

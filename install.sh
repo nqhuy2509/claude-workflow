@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Cài bộ quy trình /agent (executor agy hoặc codex) cho máy hiện tại: liên kết vào ~/.claude để mọi project dùng được.
+# Cài bộ quy trình /crew (executor agy hoặc codex) cho máy hiện tại: liên kết vào ~/.claude để mọi project dùng được.
 #   ./install.sh             cài (tạo symlink cho mọi lệnh trong commands/)
 #   ./install.sh --uninstall gỡ
 set -euo pipefail
@@ -40,4 +40,4 @@ command -v agy >/dev/null && echo "agy: $(agy --version 2>/dev/null | head -1)" 
 command -v codex >/dev/null && echo "codex: $(codex --version 2>/dev/null | head -1)" || echo "(tuỳ chọn) chưa cài codex."
 command -v agy >/dev/null || command -v codex >/dev/null || echo "CẦN ít nhất một executor: agy hoặc codex."
 command -v python3 >/dev/null || echo "CHƯA CÓ python3 — các script cần python3."
-echo "Xong. Lệnh: /agent <yêu cầu> · /agy <yêu cầu> · /codex <yêu cầu> · /agent-status · /agent-config · /agent-usage · /agent-clean"
+echo "Xong. Lệnh: /crew <yêu cầu> · /agy <yêu cầu> · /codex <yêu cầu> · /crew-status · /crew-config · /crew-usage · /crew-clean"
