@@ -47,6 +47,7 @@ Lần đầu, nếu project chưa có `.agy/config.json`, Claude tự nhận di�
 | `commands/agy-model.md`, `bin/agy-model.sh` | Xem / đổi model agy |
 | `bin/preflight.sh` | Kiểm tra đầu vào trước khi giao |
 | `commands/agy-clean.md`, `bin/agy-clean.sh` | Dọn worktree/nhánh/việc cũ |
+| `commands/agy-usage.md`, `bin/agy-usage.sh` | Thống kê token theo việc |
 | `bin/verify.sh` | Kiểm tra tự động một kho → `verify.md` |
 | `bin/run-task.sh` | Điều phối: chọn executor, resume đúng phiên, chuyển codex khi agy hết quota |
 | `bin/run-codex.sh` | Chạy codex cho một kho (sandbox workspace-write) |
@@ -78,6 +79,12 @@ Mỗi kho trong một việc do **agy** (mặc định) hoặc **codex** làm; `
 - **`/agy-clean`** (`bin/agy-clean.sh [gốc] [--apply] [--days N]`): mặc định chỉ liệt kê. `--apply` dọn phần an toàn — worktree sạch đã merge,
   nhánh `agy/*` đã merge (`branch -d`), thư mục rỗng, worktree tạm của verify, `worktree prune`, việc cũ hơn N ngày (30) → `.agy/tasks/archive/`.
   Worktree còn thay đổi / nhánh chưa merge chỉ được báo, không bị đụng.
+
+## Token đã dùng
+- `/agy-usage [tên-việc | --all]` (`bin/agy-usage.sh [gốc] [lọc|--all] [--write]`): token theo từng lượt — agy (`usage` trong `agy-N.json`),
+  codex (`turn.completed` trong `codex-N.jsonl`) — kèm model, thời gian; phần Claude **ước tính** từ transcript phiên (`~/.claude/projects/…`)
+  trong khoảng từ lần đầu nhắc tên việc đến khi file cuối của việc được ghi (+15 phút). Cache đọc tách riêng.
+- Mặc định `/agy` chạy nó khi báo cáo (Bước 6), ghi `usage.md` và đưa phần tổng vào `report.md`.
 
 ## Xem việc đang chạy
 `/agy-status` — bảng mọi việc trong `.agy/tasks/`: kho, trạng thái (ĐANG CHẠY / CHỜ KIỂM TRA / CHỜ QUYẾT / ĐÃ XONG/BỎ / CHƯA GIAO), model, số vòng, lần chạy cuối.

@@ -23,3 +23,8 @@
 - **Merge**: Claude commit và merge vào nhánh gốc.
 - **Làm lại**: kèm góp ý, Claude chuyển cho agy (tối đa 3 vòng).
 - **Bỏ**: xoá worktree và nhánh.
+
+## Token
+<!-- Từ agy-usage.sh: executor (theo lượt/model) + Claude (ước tính). Chi tiết ở usage.md. -->
+- Executor: 
+- Claude (ước tính): 

@@ -90,6 +90,8 @@ Không coi báo cáo của agy là đủ. Với mỗi kho, trong worktree:
 ## Bước 6 — Báo cáo (tiếng Việt) rồi DỪNG
 - Viết `.agy/tasks/<việc>/report.md` theo `~/.claude/agy/templates/report.md`: từng tiêu chí **Đạt / Không đạt / Chưa kiểm được** kèm
   bằng chứng; ghi rõ chỗ agy tự báo khác với kiểm tra của bạn. Không báo "đạt" khi chưa có bằng chứng.
+- **Token (mặc định)**: chạy `bash ~/.claude/agy/bin/agy-usage.sh <gốc> <tên-việc> --write`, chép phần tổng vào mục *Token* của `report.md`
+  và nêu một dòng trong tin nhắn cho người dùng (executor input/output theo model + Claude ước tính). Báo lại sau mỗi vòng Làm lại và khi Merge.
 - Trình bày rồi **DỪNG** với `wrap_up`: nút **"Merge"** / **"Làm lại"** / **"Bỏ"**, `blocked: true`.
 
 ## Bước 7 — Theo lựa chọn của người dùng
