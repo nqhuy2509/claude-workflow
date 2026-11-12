@@ -61,6 +61,8 @@ Với **mỗi kho** trong bảng phân việc:
 ## Bước 4 — Giao cho agy
 - Mỗi kho **một lệnh nền riêng** (`run_in_background: true`); nhiều kho thì chạy **song song**:
   `bash ~/.claude/agy/bin/run-task.sh <gốc>/.agy/tasks/<việc> <kho>` (executor theo bảng phân việc: thêm `EXECUTOR=codex` phía trước nếu khác config)
+- `run-task.sh` tự chạy `preflight.sh` trước; thoát mã **5** = đầu vào lỗi (brief thiếu mục, worktree sai, executor chưa đăng nhập…) →
+  sửa theo thông báo rồi giao lại, không coi là lượt của agy.
 - **codex** chạy `--sandbox workspace-write` (chỉ ghi trong worktree, **không có mạng**): trước khi giao, Claude tự chạy bước khôi phục gói
   trong worktree (`flutter pub get` / `npm ci` / `dotnet restore`…). codex được tự chạy build/test, nên brief giữ mục *Commands* như cũ
   (script tự thêm ghi chú cho codex). Không bao giờ dùng `--dangerously-bypass-approvals-and-sandbox`, không bật mạng khi chưa hỏi người dùng.
@@ -103,6 +105,7 @@ Không coi báo cáo của agy là đủ. Với mỗi kho, trong worktree:
 - **Bài học**: sau mỗi việc, nếu có Làm lại, lệnh bị chặn, hoặc verify bắt lỗi mà một câu trong brief có thể tránh được → thêm **một dòng tiếng Anh**
   `- …` (kèm `[kho: <tên>]` nếu chỉ áp cho một kho) vào `<gốc>/.agy/lessons.md` và nói cho người dùng. Không thêm bài học trùng; giữ file ngắn (≤ 30 dòng),
   gộp/xoá dòng cũ khi cần. Script tự chèn các dòng này vào prompt vòng đầu của agy/codex.
+- Thỉnh thoảng (hoặc khi người dùng hỏi) gợi ý `/agy-clean` để dọn phần sót lại.
 - **Bỏ**: `git worktree remove --force` + `git branch -D agy/<tên-việc>`; giữ `.agy/tasks/<việc>` làm lịch sử.
 
 ## Nguyên tắc

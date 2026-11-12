@@ -45,6 +45,8 @@ Lần đầu, nếu project chưa có `.agy/config.json`, Claude tự nhận di�
 | `commands/agy.md` | Lệnh `/agy`: các bước, chỗ dừng chờ duyệt, quy tắc |
 | `commands/agy-status.md`, `bin/agy-status.sh` | Xem các việc và trạng thái |
 | `commands/agy-model.md`, `bin/agy-model.sh` | Xem / đổi model agy |
+| `bin/preflight.sh` | Kiểm tra đầu vào trước khi giao |
+| `commands/agy-clean.md`, `bin/agy-clean.sh` | Dọn worktree/nhánh/việc cũ |
 | `bin/verify.sh` | Kiểm tra tự động một kho → `verify.md` |
 | `bin/run-task.sh` | Điều phối: chọn executor, resume đúng phiên, chuyển codex khi agy hết quota |
 | `bin/run-codex.sh` | Chạy codex cho một kho (sandbox workspace-write) |
@@ -68,6 +70,14 @@ Mỗi kho trong một việc do **agy** (mặc định) hoặc **codex** làm; `
 - **Model theo độ lớn việc**: đề xuất ghi S/M/L → `<việc>/size.txt` → `"model_by_size"` (`/agy-model size S gemini-3.8-flash-high`).
 - **Test có trọng tâm**: brief chỉ cho agy chạy test của phần thay đổi; bộ đầy đủ chạy một lần trong `verify.sh`.
 - **Bài học** `.agy/lessons.md` của project: mỗi dòng `- …` (tiếng Anh, `[kho: X]` để giới hạn) tự chèn vào prompt vòng đầu; Claude thêm dòng sau mỗi lần Làm lại / bị chặn lệnh.
+
+## Kiểm tra đầu vào và dọn dẹp
+- **Preflight** (`bin/preflight.sh`, tự chạy trong `run-task.sh`): brief đủ mục (*Allowed paths*, *Acceptance criteria*, *Self-check*, `AGY_REPORT.md`,
+  không còn chỗ trống `<…>`), worktree tồn tại và ở nhánh `agy/*` (không phải thư mục chính), resume có `feedback-*.md`,
+  executor đã cài + đăng nhập, không có agy/codex khác đang chạy trên worktree. Lỗi → thoát mã 5, không chạy.
+- **`/agy-clean`** (`bin/agy-clean.sh [gốc] [--apply] [--days N]`): mặc định chỉ liệt kê. `--apply` dọn phần an toàn — worktree sạch đã merge,
+  nhánh `agy/*` đã merge (`branch -d`), thư mục rỗng, worktree tạm của verify, `worktree prune`, việc cũ hơn N ngày (30) → `.agy/tasks/archive/`.
+  Worktree còn thay đổi / nhánh chưa merge chỉ được báo, không bị đụng.
 
 ## Xem việc đang chạy
 `/agy-status` — bảng mọi việc trong `.agy/tasks/`: kho, trạng thái (ĐANG CHẠY / CHỜ KIỂM TRA / CHỜ QUYẾT / ĐÃ XONG/BỎ / CHƯA GIAO), model, số vòng, lần chạy cuối.

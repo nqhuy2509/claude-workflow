@@ -5,6 +5,7 @@
 #
 # Executor: EXECUTOR=… > "executor" của kho > "executor" chung > "agy".
 # Vòng đầu ghi executor vào <kho>/executor.txt; khi resume (Làm lại / chạy tiếp) dùng lại đúng executor + phiên đó.
+# Trước khi chạy: preflight.sh (mã 5 = đầu vào lỗi, không chạy).
 # agy hết quota trên cả chuỗi model (mã 4) và "executor_fallback": "codex" → chuyển sang codex (phiên mới, cùng worktree).
 set -uo pipefail
 KIT="$(cd "$(dirname "$(readlink -f "$0" 2>/dev/null || echo "$0")")/.." && pwd)"
@@ -19,6 +20,8 @@ if [[ -n "$RESUME" && -f "$DIR/executor.txt" ]]; then EXEC="$(cat "$DIR/executor
 else EXEC="${EXECUTOR:-$(cfg executor)}"; EXEC="${EXEC:-agy}"; fi
 FALLBACK="$(cfg executor_fallback)"
 QUOTA_NOTE="NOTE: A previous executor stopped on this task because it ran out of quota. Continue from the current state of the worktree (files already changed are kept): check git status / git diff and AGY_REPORT.md, finish the remaining steps, run the self-checks and update AGY_REPORT.md."
+
+bash "$KIT/bin/preflight.sh" "$TASK_DIR" "$REPO" "$EXEC" "$RESUME" || exit 5
 
 case "$EXEC" in
   codex) bash "$KIT/bin/run-codex.sh" "$TASK_DIR" "$REPO" "$RESUME"; exit $? ;;
